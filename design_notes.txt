@@ -1,0 +1,56 @@
+Use Cases:
+==========
+
+Set Alarms
+    Able to set 0-10 times of day
+    
+Get Alarm
+    Alarm vibrates phone until handled (or timeout)
+    
+Handle Alarm
+    User can either:
+        Take
+        Silence
+        Snooze
+        
+Timeout Alarm
+    If user doesn't handle alarm it is considered Snoozed
+    
+Silence alarm
+    Vibration stops but app stays on Alarm screen
+    
+Take
+    Alarm stops and app exits
+    
+Snooze
+    Alarm is snoozed for 10 minutes per press
+    After 5 seconds without press, wakup is scheduled and app exits
+    
+    
+User Launch:
+Show next time
+
+
+Wakeup Launch:
+    
+Data:
+=====
+
+typedef struct {
+    uint8_t hour = 0;
+    uint8_t minute = 0;
+    bool active = false;
+} TimeOfDay
+
+typedef struct {
+    TimeOfDay a1;
+    TimeOfDay a2;
+    TimeOfDay a3;
+    TimeOfDay a4;
+    TimeOfDay a5;
+    uint8_t activeAlarms;
+} Alarms
+
+    uint32_t ALARM_TIMES_KEY = 1;
+    
+    
