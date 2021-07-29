@@ -3,6 +3,11 @@
 
 #include "setup.h"
 
+static void ensure_app_glance()
+{
+    app_glance_reload(set_app_glance, NULL);
+}
+
 int main()
 {
     if(launch_reason() == APP_LAUNCH_WAKEUP)
@@ -15,5 +20,6 @@ int main()
         setup_app();
     }
     app_event_loop();
+    ensure_app_glance();
     tear_down_app();
 }

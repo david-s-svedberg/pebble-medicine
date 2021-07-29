@@ -137,6 +137,24 @@
                         "aplite"
                     ],
                     "type": "bitmap"
+                },
+                {
+                    "file": "images/pill.png",
+                    "name": "PILL_ICON",
+                    "spaceOptimization": "memory",
+                    "targetPlatforms": [
+                        "diorite",
+                        "basalt",
+                        "aplite"
+                    ],
+                    "type": "bitmap"
+                }
+            ],
+            "publishedMedia": [
+                {
+                  "name": "PILL_ICON",
+                  "id": 1,
+                  "glance": "PILL_ICON"
                 }
             ]
         },
