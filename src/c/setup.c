@@ -263,30 +263,30 @@ static void setup_edit_alarm_active_layer(Layer *window_layer, GRect bounds)
     layer_add_child(window_layer, text_layer_get_layer(edit_alarm_active_layer));
 }
 
-static void update_edit_alarm_time_layers(Window* window)
-{
-    static char hour_buffer[3];
-    static char minute_buffer[3];
+// static void update_edit_alarm_time_layers(Window* window)
+// {
+//     static char hour_buffer[3];
+//     static char minute_buffer[3];
 
-    if(m_edit_alarm->hour < 10)
-    {
-        snprintf(hour_buffer, sizeof(hour_buffer), singleInt, m_edit_alarm->hour);
-    } else
-    {
-        snprintf(hour_buffer, sizeof(hour_buffer), doubleInt, m_edit_alarm->hour);
-    }
+//     if(m_edit_alarm->hour < 10)
+//     {
+//         snprintf(hour_buffer, sizeof(hour_buffer), singleInt, m_edit_alarm->hour);
+//     } else
+//     {
+//         snprintf(hour_buffer, sizeof(hour_buffer), doubleInt, m_edit_alarm->hour);
+//     }
 
-    if(m_edit_alarm->minute < 10)
-    {
-        snprintf(minute_buffer, sizeof(minute_buffer), singleInt, m_edit_alarm->minute);
-    } else
-    {
-        snprintf(minute_buffer, sizeof(minute_buffer), doubleInt, m_edit_alarm->minute);
-    }
+//     if(m_edit_alarm->minute < 10)
+//     {
+//         snprintf(minute_buffer, sizeof(minute_buffer), singleInt, m_edit_alarm->minute);
+//     } else
+//     {
+//         snprintf(minute_buffer, sizeof(minute_buffer), doubleInt, m_edit_alarm->minute);
+//     }
 
-    text_layer_set_text(edit_alarm_time_hour_layer, hour_buffer);
-    text_layer_set_text(edit_alarm_time_minute_layer, minute_buffer);
-}
+//     text_layer_set_text(edit_alarm_time_hour_layer, hour_buffer);
+//     text_layer_set_text(edit_alarm_time_minute_layer, minute_buffer);
+// }
 
 static void setup_edit_alarm_time_layer(Layer *window_layer, GRect bounds)
 {
