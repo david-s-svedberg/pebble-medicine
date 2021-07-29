@@ -14,6 +14,7 @@ static void seed_data()
         m_data.alarms[i].hour = 0;
         m_data.alarms[i].minute = 0;
         m_data.alarms[i].active = false;
+        m_data.alarms[i].wakeup_id = -1;
     }
     persist_write_data(DATA_KEY, &m_data, sizeof(Data));
 }
@@ -115,6 +116,7 @@ void ensure_all_alarms_set()
                 t = t + (SECONDS_PER_DAY);
             }
             WakeupId id = wakeup_schedule(t, i, true);
+            current->wakeup_id = id;
             if(id < 0)
             {
                 switch (id)
@@ -143,4 +145,5 @@ void save_data()
 {
     persist_write_data(DATA_KEY, &m_data, sizeof(Data));
     ensure_all_alarms_set();
+    persist_write_data(DATA_KEY, &m_data, sizeof(Data));
 }

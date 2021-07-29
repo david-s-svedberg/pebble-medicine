@@ -10,6 +10,7 @@ typedef struct {
     uint8_t hour;
     uint8_t minute;
     bool active;
+    WakeupId wakeup_id;
 } AlarmTimeOfDay;
 
 typedef struct {

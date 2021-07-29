@@ -58,6 +58,11 @@ static char* double_hour_single_minute = "%d:0%d";
 static void take_next_medicine(ClickRecognizerRef recognizer, void* context)
 {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Take next medicine requested");
+    AlarmTimeOfDay* next = GetNextAlarmTime();
+    if(next != NULL)
+    {
+        wakeup_cancel(next->wakup_id);
+    }
 }
 
 static void ensure_icons_loaded()
@@ -473,7 +478,7 @@ static void snooze_selection_done(void* data)
 {
     time_t t = time(NULL);
     t += (SECONDS_PER_MINUTE * m_snooze_minutes);
-    wakeup_schedule(t, m_wakup_alarm->index, true);
+    m_wakup_alarm->wakeup_id = wakeup_schedule(t, m_wakup_alarm->index, true);
     close_alarm();
 }
 

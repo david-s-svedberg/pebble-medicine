@@ -1,38 +1,64 @@
+Refactor:
+=========
+
+main_window
+    + main_window_setup
+
+main_window_logic
+    + get_next_alarm_text
+    + take_next_meds
+    + goto_alarms_menu
+
+alarm_menu_window
+    + alarm_menu_window_setup
+
+alarm_menu_window_logic
+    +
+
+alarm_edit_window
+    + alarm_edit_window_setup
+
+persistance
+    + get_alarms
+    + save_data
+
+schedular
+    + schedule_alarms
 Use Cases:
 ==========
 
 Set Alarms
     Able to set 0-10 times of day
-    
+
 Get Alarm
     Alarm vibrates phone until handled (or timeout)
-    
+
 Handle Alarm
     User can either:
         Take
         Silence
         Snooze
-        
+
 Timeout Alarm
     If user doesn't handle alarm it is considered Snoozed
-    
+
 Silence alarm
     Vibration stops but app stays on Alarm screen
-    
+
 Take
     Alarm stops and app exits
-    
+
 Snooze
     Alarm is snoozed for 10 minutes per press
     After 5 seconds without press, wakup is scheduled and app exits
-    
-    
+
+
 User Launch:
 Show next time
 
 
 Wakeup Launch:
-    
+
 Data:
 =====
 
@@ -52,5 +78,4 @@ typedef struct {
 } Alarms
 
     uint32_t ALARM_TIMES_KEY = 1;
-    
-    
+
