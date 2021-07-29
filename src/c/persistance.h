@@ -6,6 +6,7 @@
 #define MAX_ALARMS 5
 
 typedef struct {
+    uint8_t index;
     uint8_t hour;
     uint8_t minute;
     bool active;
@@ -19,3 +20,4 @@ AlarmTimeOfDay* GetAlarms();
 AlarmTimeOfDay* GetAlarm(int index);
 AlarmTimeOfDay* GetNextAlarmTime();
 void save_data();
+void ensure_all_alarms_set();

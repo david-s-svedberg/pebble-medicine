@@ -8,8 +8,9 @@ static Data m_data;
 
 static void seed_data()
 {
-    for(int i = 0; i < MAX_ALARMS; i++)
+    for(uint8_t i = 0; i < MAX_ALARMS; i++)
     {
+        m_data.alarms[i].index = i;
         m_data.alarms[i].hour = 0;
         m_data.alarms[i].minute = 0;
         m_data.alarms[i].active = false;
@@ -119,16 +120,16 @@ void ensure_all_alarms_set()
                 switch (id)
                 {
                 case E_RANGE:
-                    APP_LOG(APP_LOG_LEVEL_DEBUG, "ERROR: Another event in period");
+                    APP_LOG(APP_LOG_LEVEL_ERROR, "ERROR: Another event in period");
                     break;
                 case E_INVALID_ARGUMENT:
-                    APP_LOG(APP_LOG_LEVEL_DEBUG, "ERROR: Time is in the past");
+                    APP_LOG(APP_LOG_LEVEL_ERROR, "ERROR: Time is in the past");
                     break;
                 case E_OUT_OF_RESOURCES:
-                    APP_LOG(APP_LOG_LEVEL_DEBUG, "ERROR: No more wakups for this app");
+                    APP_LOG(APP_LOG_LEVEL_ERROR, "ERROR: No more wakups for this app");
                     break;
                 case E_INTERNAL:
-                    APP_LOG(APP_LOG_LEVEL_DEBUG, "ERROR: system error occurred during scheduling");
+                    APP_LOG(APP_LOG_LEVEL_ERROR, "ERROR: system error occurred during scheduling");
                     break;
                 default:
                     break;

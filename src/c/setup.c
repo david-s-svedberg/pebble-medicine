@@ -17,6 +17,8 @@ static TextLayer *edit_alarm_time_colon_layer;
 static TextLayer *edit_alarm_time_minute_layer;
 
 static TextLayer *alarm_title_layer;
+static TextLayer *alarm_time_layer;
+static TextLayer *snooze_time_layer;
 
 static ActionBarLayer* main_window_action_bar_layer;
 static ActionBarLayer* edit_alarm_action_bar_layer;
@@ -33,12 +35,17 @@ static GBitmap *edit_icon;
 static GBitmap *up_icon;
 static GBitmap *down_icon;
 static GBitmap *play_icon;
+static GBitmap *snooze_icon;
+static GBitmap *silence_icon;
 
 static char m_titles[5][6];
 static AlarmTimeOfDay* m_edit_alarm;
 static bool m_icons_loaded = false;
 static SimpleMenuItem m_menu_items[5];
 static SimpleMenuSection m_menu;
+
+static AlarmTimeOfDay* m_wakup_alarm;
+static bool m_alarm_silenced = false;
 
 static const char* singleInt = "0%d";
 static const char* doubleInt = "%d";
@@ -65,6 +72,8 @@ static void ensure_icons_loaded()
         up_icon = gbitmap_create_with_resource(RESOURCE_ID_UP_ICON);
         down_icon = gbitmap_create_with_resource(RESOURCE_ID_DOWN_ICON);
         play_icon = gbitmap_create_with_resource(RESOURCE_ID_PLAY_ICON);
+        snooze_icon = gbitmap_create_with_resource(RESOURCE_ID_SNOOZE_ICON);
+        silence_icon = gbitmap_create_with_resource(RESOURCE_ID_SILENCE_ICON);
         m_icons_loaded = true;
     }
 }
@@ -96,7 +105,6 @@ static void un_highlight_minutes()
 
 static void toggle_enabled(ClickRecognizerRef recognizer, void* context)
 {
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Toggle Enabled requested");
     m_edit_alarm->active = !m_edit_alarm->active;
     text_layer_set_text(edit_alarm_active_layer, m_edit_alarm->active ? "Active" : "Inactive");
     save_data();
@@ -120,7 +128,6 @@ static void edit_time_action_bar_click_config_provider(void* context)
 
 static void edit_time(ClickRecognizerRef recognizer, void* context)
 {
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Edit time requested");
     action_bar_layer_set_click_config_provider(edit_alarm_action_bar_layer, edit_time_action_bar_click_config_provider);
     action_bar_layer_set_icon_animated(edit_alarm_action_bar_layer, BUTTON_ID_UP, up_icon, true);
     action_bar_layer_set_icon_animated(edit_alarm_action_bar_layer, BUTTON_ID_SELECT, play_icon, true);
@@ -174,7 +181,6 @@ static void increase_time(ClickRecognizerRef recognizer, void* context)
 
 static void decrease_time(ClickRecognizerRef recognizer, void* context)
 {
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Decrease time requested");
     if(m_current_edit_step == 0)
     {
         if(m_edit_alarm->hour > 0)
@@ -199,7 +205,6 @@ static void decrease_time(ClickRecognizerRef recognizer, void* context)
 
 static void goto_next_edit(ClickRecognizerRef recognizer, void* context)
 {
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "goto next edit requested");
     m_current_edit_step++;
     if(m_current_edit_step > 1)
     {
@@ -228,7 +233,6 @@ static void goto_previous_edit(ClickRecognizerRef recognizer, void* context)
 
 static void save_alarm_and_go_back(ClickRecognizerRef recognizer, void* context)
 {
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Save Alarm requested");
     save_data();
     window_stack_pop(true);
 }
@@ -351,7 +355,6 @@ static void handle_alarm_edit(int index, void* context)
 
 static char* get_format_for_alarm(AlarmTimeOfDay* current)
 {
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "get_format_for_alarm");
     char* format = NULL;
     if(current->hour > 9)
     {
@@ -372,7 +375,6 @@ static char* get_format_for_alarm(AlarmTimeOfDay* current)
             format = single_hour_single_minute;
         }
     }
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "get_format_for_alarm done");
     return format;
 }
 
@@ -442,37 +444,79 @@ static void main_window_click_config_provider(void* context)
     window_long_click_subscribe(BUTTON_ID_SELECT, 500, take_next_medicine, NULL);
 }
 
+static uint16_t snooze_progression[] = {5, 10, 15, 30, 60, 90, 120};
+static uint16_t m_snooze_minutes = 5;
+static AppTimer* m_snooze_selection_done = NULL;
+
+static void close_alarm()
+{
+    exit_reason_set(APP_EXIT_ACTION_PERFORMED_SUCCESSFULLY);
+    window_stack_remove(alarm_window, true);
+}
+
 static void silence_alarm(ClickRecognizerRef recognizer, void* context)
 {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "silence alarm requested");
+    vibes_cancel();
+    m_alarm_silenced = true;
 }
 
 static void take_medicine(ClickRecognizerRef recognizer, void* context)
 {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "take medicine requested");
+    vibes_cancel();
+    m_alarm_silenced = true;
+    close_alarm();
 }
+
+static void snooze_selection_done(void* data)
+{
+    time_t t = time(NULL);
+    t += (SECONDS_PER_MINUTE * m_snooze_minutes);
+    wakeup_schedule(t, m_wakup_alarm->index, true);
+    close_alarm();
+}
+
+static uint8_t m_clicks = 0;
 
 static void snooze_alarm(ClickRecognizerRef recognizer, void* context)
 {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "snooze alarm requested");
+    // uint8_t clicks = click_number_of_clicks_counted(recognizer);
+    m_clicks++;
+    m_snooze_minutes = snooze_progression[(m_clicks - 1) % ARRAY_LENGTH(snooze_progression)];
+    static char snooze_text_buffer[6];
+    snprintf(snooze_text_buffer, sizeof(snooze_text_buffer), "%dm", m_snooze_minutes);
+    text_layer_set_text(snooze_time_layer, snooze_text_buffer);
+    m_alarm_silenced = true;
+    if(m_snooze_selection_done != NULL)
+    {
+        app_timer_reschedule(m_snooze_selection_done, 1000);
+    } else
+    {
+        m_snooze_selection_done = app_timer_register(1000, snooze_selection_done, NULL);
+    }
 }
 
 static void handle_back_alarm(ClickRecognizerRef recognizer, void* context)
 {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "back pressed on alarm");
+    time_t t = time(NULL);
+    t += (SECONDS_PER_MINUTE * 5);
+    wakeup_schedule(t, m_wakup_alarm->index, true);
+    close_alarm();
 }
 
 static void alarm_window_click_config_provider(void* context)
 {
     window_single_click_subscribe(BUTTON_ID_UP, silence_alarm);
     window_single_click_subscribe(BUTTON_ID_BACK, handle_back_alarm);
-    window_long_click_subscribe(BUTTON_ID_SELECT, 500, take_medicine, NULL);
+    window_single_click_subscribe(BUTTON_ID_SELECT, take_medicine);
     window_single_repeating_click_subscribe(BUTTON_ID_DOWN, 500, snooze_alarm);
 }
 
 static void setup_main_window_action_bar_layer(Layer *window_layer, GRect bounds)
 {
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "setup_main_window_action_bar_layer");
     main_window_action_bar_layer = action_bar_layer_create();
     action_bar_layer_set_background_color(main_window_action_bar_layer, GColorWhite);
     action_bar_layer_add_to_window(main_window_action_bar_layer, main_window);
@@ -482,7 +526,6 @@ static void setup_main_window_action_bar_layer(Layer *window_layer, GRect bounds
 
     action_bar_layer_set_icon_animated(main_window_action_bar_layer, BUTTON_ID_SELECT, check_icon, true);
     action_bar_layer_set_icon_animated(main_window_action_bar_layer, BUTTON_ID_DOWN, config_icon, true);
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "setup_main_window_action_bar_layer done");
 }
 
 static void setup_alarm_window_action_bar_layer(Layer *window_layer, GRect bounds)
@@ -494,16 +537,14 @@ static void setup_alarm_window_action_bar_layer(Layer *window_layer, GRect bound
 
     ensure_icons_loaded();
 
-    action_bar_layer_set_icon_animated(alarm_window_action_bar_layer, BUTTON_ID_UP, alarm_icon, true);
+    action_bar_layer_set_icon_animated(alarm_window_action_bar_layer, BUTTON_ID_UP, silence_icon, true);
     action_bar_layer_set_icon_animated(alarm_window_action_bar_layer, BUTTON_ID_SELECT, check_icon, true);
-    action_bar_layer_set_icon_animated(alarm_window_action_bar_layer, BUTTON_ID_DOWN, no_alarm_icon, true);
+    action_bar_layer_set_icon_animated(alarm_window_action_bar_layer, BUTTON_ID_DOWN, snooze_icon, true);
 }
 
 static void update_next_alarm_text(Window *window)
 {
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "update_next_alarm_text");
     AlarmTimeOfDay* next = GetNextAlarmTime();
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Got next alarm");
     static char next_alarm_buffer[6];
     if(next == NULL)
     {
@@ -511,16 +552,12 @@ static void update_next_alarm_text(Window *window)
     } else
     {
         snprintf(next_alarm_buffer, sizeof(next_alarm_buffer), get_format_for_alarm(next), next->hour, next->minute);
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "Got format");
     }
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Setting text");
     text_layer_set_text(next_alarm_layer, next_alarm_buffer);
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "update_next_alarm_text done");
 }
 
 static void setup_next_alarm_layer(Layer *window_layer, GRect bounds)
 {
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Setting up next alarm layer");
     next_alarm_label_layer = text_layer_create(GRect(0, 70, bounds.size.w - 10, 30));
     next_alarm_layer = text_layer_create(GRect(0, 94, bounds.size.w - 10, 30));
 
@@ -539,12 +576,10 @@ static void setup_next_alarm_layer(Layer *window_layer, GRect bounds)
 
     layer_add_child(window_layer, text_layer_get_layer(next_alarm_label_layer));
     layer_add_child(window_layer, text_layer_get_layer(next_alarm_layer));
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Setting up next alarm layer done");
 }
 
 static void setup_title_layer(Layer *window_layer, GRect bounds)
 {
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Setting up title layer");
     title_layer = text_layer_create(GRect(0, 0, bounds.size.w - ACTION_BAR_WIDTH, 60));
 
     text_layer_set_background_color(title_layer, GColorBlack);
@@ -568,16 +603,49 @@ static void setup_alarm_title_layer(Layer *window_layer, GRect bounds)
     text_layer_set_font(alarm_title_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
     text_layer_set_text_alignment(alarm_title_layer, GTextAlignmentCenter);
 
-    static char alarm_title_buffer[18];
+
+    static char alarm_title_buffer[15];
     snprintf(alarm_title_buffer, sizeof(alarm_title_buffer), "Take Your Meds");
     text_layer_set_text(alarm_title_layer, alarm_title_buffer);
 
     layer_add_child(window_layer, text_layer_get_layer(alarm_title_layer));
 }
 
+static void setup_alarm_time_layer(Layer *window_layer, GRect bounds)
+{
+    alarm_time_layer = text_layer_create(GRect(0, 67, bounds.size.w - ACTION_BAR_WIDTH, 60));
+
+    text_layer_set_background_color(alarm_time_layer, GColorBlack);
+    text_layer_set_text_color(alarm_time_layer, GColorWhite);
+    text_layer_set_font(alarm_time_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
+    text_layer_set_text_alignment(alarm_time_layer, GTextAlignmentCenter);
+
+    char* format = get_format_for_alarm(m_wakup_alarm);
+    static char alarm_time_buffer[6];
+    snprintf(alarm_time_buffer, sizeof(alarm_time_buffer), format, m_wakup_alarm->hour, m_wakup_alarm->minute);
+
+    text_layer_set_text(alarm_time_layer, alarm_time_buffer);
+
+    layer_add_child(window_layer, text_layer_get_layer(alarm_time_layer));
+}
+
+static void setup_alarm_snooze_time_layer(Layer *window_layer, GRect bounds)
+{
+    uint16_t width = bounds.size.w - ACTION_BAR_WIDTH;
+    snooze_time_layer = text_layer_create(GRect(width - 60, bounds.size.h - 50, 50, 30));
+
+    text_layer_set_background_color(snooze_time_layer, GColorBlack);
+    text_layer_set_text_color(snooze_time_layer, GColorWhite);
+    text_layer_set_font(snooze_time_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
+    text_layer_set_text_alignment(snooze_time_layer, GTextAlignmentRight);
+
+    text_layer_set_text(snooze_time_layer, "5m");
+
+    layer_add_child(window_layer, text_layer_get_layer(snooze_time_layer));
+}
+
 static void setup_main_window(Window *window)
 {
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Setting up main window");
     window_set_background_color(window, GColorBlack);
     Layer *window_layer = window_get_root_layer(window);
     GRect bounds = layer_get_bounds(window_layer);
@@ -603,20 +671,45 @@ static void setup_alarm_window(Window *window)
     GRect bounds = layer_get_bounds(window_layer);
 
     setup_alarm_title_layer(window_layer, bounds);
+    setup_alarm_time_layer(window_layer, bounds);
+    setup_alarm_snooze_time_layer(window_layer, bounds);
     setup_alarm_window_action_bar_layer(window_layer, bounds);
 }
 
 static void tear_down_alarm_window(Window *window)
 {
     text_layer_destroy(alarm_title_layer);
-    // text_layer_destroy(next_alarm_layer);
-    // text_layer_destroy(next_alarm_label_layer);
-    // action_bar_layer_remove_from_window(main_window_action_bar_layer);
-    // action_bar_layer_destroy(main_window_action_bar_layer);
+    action_bar_layer_remove_from_window(alarm_window_action_bar_layer);
+    action_bar_layer_destroy(alarm_window_action_bar_layer);
+}
+
+static void run_vibration(void* data)
+{
+    if(!m_alarm_silenced)
+    {
+        static const uint32_t const segments[] = { 50 };
+        VibePattern pat = {
+            .durations = segments,
+            .num_segments = ARRAY_LENGTH(segments),
+        };
+        vibes_enqueue_custom_pattern(pat);
+        app_timer_register(2000, run_vibration, NULL);
+    }
+}
+
+static void setup_alarm_state()
+{
+    WakeupId id = 0;
+    int32_t alarm_index = 0;
+    wakeup_get_launch_event(&id, &alarm_index);
+    m_wakup_alarm = GetAlarm(alarm_index);
+    run_vibration(NULL);
+    ensure_all_alarms_set();
 }
 
 void setup_alarm()
 {
+    setup_alarm_state();
     alarm_window = window_create();
 
        window_set_window_handlers(alarm_window, (WindowHandlers) {

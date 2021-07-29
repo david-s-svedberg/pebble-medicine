@@ -115,6 +115,28 @@
                         "aplite"
                     ],
                     "type": "bitmap"
+                },
+                {
+                    "file": "images/snooze.png",
+                    "name": "SNOOZE_ICON",
+                    "spaceOptimization": "memory",
+                    "targetPlatforms": [
+                        "diorite",
+                        "basalt",
+                        "aplite"
+                    ],
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/silence.png",
+                    "name": "SILENCE_ICON",
+                    "spaceOptimization": "memory",
+                    "targetPlatforms": [
+                        "diorite",
+                        "basalt",
+                        "aplite"
+                    ],
+                    "type": "bitmap"
                 }
             ]
         },
