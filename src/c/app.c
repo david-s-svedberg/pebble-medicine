@@ -3,6 +3,7 @@
 #include "main_window.h"
 #include "config_menu_window.h"
 #include "edit_alarm_window.h"
+#include "alarm_window.h"
 
 #include "icons.h"
 #include "app_glance.h"
@@ -13,7 +14,7 @@ void init()
     if(launch_reason() == APP_LAUNCH_WAKEUP)
     {
         APP_LOG(APP_LOG_LEVEL_DEBUG, "Starting from Wakeup");
-        setup_alarm();
+        setup_alarm_window();
     } else
     {
         APP_LOG(APP_LOG_LEVEL_DEBUG, "Starting from non Wakeup");
@@ -23,9 +24,11 @@ void init()
 
 void deinit()
 {
+    APP_LOG(APP_LOG_LEVEL_INFO, "Deiniting Meds");
     tear_down_main_window();
     tear_down_config_menu_window();
     tear_down_edit_alarm_window();
+    tear_down_alarm_window();
     destroy_all_icons();
     setup_app_glance();
 }

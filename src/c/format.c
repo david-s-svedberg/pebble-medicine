@@ -1,5 +1,7 @@
 #include "format.h"
 
+#include <stdio.h>
+
 static const char* singleInt = "0%d";
 static const char* doubleInt = "%d";
 
@@ -8,10 +10,9 @@ static char* single_hour_double_minute = "0%d:%d";
 static char* double_hour_double_minute = "%d:%d";
 static char* double_hour_single_minute = "%d:0%d";
 
-
 void fill_time_unit_string(char* buf, uint8_t timeUnit)
 {
-    snprintf(buf, sizeof(buf), timeUnit < 10 ? singleInt : doubleInt, timeUnit);
+    snprintf(buf, 3, timeUnit < 10 ? singleInt : doubleInt, timeUnit);
 }
 
 void fill_time_string(char* buf, uint8_t hour, uint8_t minute)
@@ -36,5 +37,5 @@ void fill_time_string(char* buf, uint8_t hour, uint8_t minute)
             format = single_hour_single_minute;
         }
     }
-    snprintf(buf, sizeof(buf), format, hour, minute);
+    snprintf(buf, 6, format, hour, minute);
 }

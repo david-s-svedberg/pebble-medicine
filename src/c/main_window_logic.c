@@ -19,7 +19,7 @@ void fill_next_alarm_time(char* buf)
     AlarmTimeOfDay* next = GetNextAlarmTime();
     if(next == NULL)
     {
-        snprintf(buf, sizeof(buf), "None");
+        snprintf(buf, 6, "None");
     } else
     {
         fill_time_string(buf, next->hour, next->minute);

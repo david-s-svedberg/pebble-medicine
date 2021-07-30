@@ -26,8 +26,6 @@ static void setup_main_window_action_bar_layer(Layer *window_layer, GRect bounds
     action_bar_layer_add_to_window(main_window_action_bar_layer, main_window);
     action_bar_layer_set_click_config_provider(main_window_action_bar_layer, main_window_click_config_provider);
 
-    ensure_icons_loaded();
-
     action_bar_layer_set_icon_animated(main_window_action_bar_layer, BUTTON_ID_SELECT, get_check_icon(), true);
     action_bar_layer_set_icon_animated(main_window_action_bar_layer, BUTTON_ID_DOWN, get_config_icon(), true);
 }
@@ -73,7 +71,7 @@ static void setup_title_layer(Layer *window_layer, GRect bounds)
     layer_add_child(window_layer, text_layer_get_layer(title_layer));
 }
 
-static void setup_main_window(Window *window)
+static void load_main_window(Window *window)
 {
     window_set_background_color(window, GColorBlack);
     Layer *window_layer = window_get_root_layer(window);
@@ -84,7 +82,7 @@ static void setup_main_window(Window *window)
     setup_main_window_action_bar_layer(window_layer, bounds);
 }
 
-static void tear_down_main_window(Window *window)
+static void unload_main_window(Window *window)
 {
     text_layer_destroy(title_layer);
     text_layer_destroy(next_alarm_layer);
@@ -93,25 +91,13 @@ static void tear_down_main_window(Window *window)
     action_bar_layer_destroy(main_window_action_bar_layer);
 }
 
-static void setup_alarm_window(Window *window)
-{
-    window_set_background_color(window, GColorBlack);
-    Layer *window_layer = window_get_root_layer(window);
-    GRect bounds = layer_get_bounds(window_layer);
-
-    setup_alarm_title_layer(window_layer, bounds);
-    setup_alarm_time_layer(window_layer, bounds);
-    setup_alarm_snooze_time_layer(window_layer, bounds);
-    setup_alarm_window_action_bar_layer(window_layer, bounds);
-}
-
 void setup_main_window()
 {
     main_window = window_create();
 
     window_set_window_handlers(main_window, (WindowHandlers) {
-        .load = setup_main_window,
-        .unload = tear_down_main_window,
+        .load = load_main_window,
+        .unload = unload_main_window,
         .appear = update_next_alarm_text
     });
 

@@ -12,7 +12,6 @@ static TextLayer *edit_alarm_active_layer;
 static TextLayer *edit_alarm_time_hour_layer;
 static TextLayer *edit_alarm_time_colon_layer;
 static TextLayer *edit_alarm_time_minute_layer;
-
 static ActionBarLayer* edit_alarm_action_bar_layer;
 
 static void setup_edit_alarm_action_bar_layer(Layer *window_layer, GRect bounds)
@@ -22,7 +21,9 @@ static void setup_edit_alarm_action_bar_layer(Layer *window_layer, GRect bounds)
     action_bar_layer_add_to_window(edit_alarm_action_bar_layer, edit_alarm_window);
     action_bar_layer_set_click_config_provider(edit_alarm_action_bar_layer, edit_alarm_action_bar_click_config_provider);
 
-    change_to_init_edit_alarm_actions();
+    action_bar_layer_set_icon_animated(edit_alarm_action_bar_layer, BUTTON_ID_UP, get_edit_alarm()->active ? get_alarm_icon() : get_no_alarm_icon(), true);
+    action_bar_layer_set_icon_animated(edit_alarm_action_bar_layer, BUTTON_ID_SELECT, get_edit_icon(), true);
+    action_bar_layer_set_icon_animated(edit_alarm_action_bar_layer, BUTTON_ID_DOWN, get_check_icon(), true);
 }
 
 static void setup_edit_alarm_active_layer(Layer *window_layer, GRect bounds)
@@ -77,7 +78,7 @@ static void setup_edit_alarm_time_layer(Layer *window_layer, GRect bounds)
     layer_add_child(window_layer, text_layer_get_layer(edit_alarm_time_minute_layer));
 }
 
-static void setup_edit_alarm_window(Window *edit_alarm_window)
+static void load_edit_alarm_window(Window *edit_alarm_window)
 {
     window_set_background_color(edit_alarm_window, GColorBlack);
     Layer *edit_alarm_window_layer = window_get_root_layer(edit_alarm_window);
@@ -86,31 +87,36 @@ static void setup_edit_alarm_window(Window *edit_alarm_window)
     setup_edit_alarm_action_bar_layer(edit_alarm_window_layer, edit_alarm_window_bounds);
     setup_edit_alarm_active_layer(edit_alarm_window_layer, edit_alarm_window_bounds);
     setup_edit_alarm_time_layer(edit_alarm_window_layer, edit_alarm_window_bounds);
-}
 
-static void tear_down_edit_alarm_window(Window *window)
-{
-    text_layer_destroy(edit_alarm_active_layer);
-    action_bar_layer_remove_from_window(edit_alarm_action_bar_layer);
-    action_bar_layer_destroy(edit_alarm_action_bar_layer);
-}
-
-void setup_edit_alarm_window(AlarmTimeOfDay* edit_alarm)
-{
-    set_edit_alarm(edit_alarm);
-
-    edit_alarm_window = window_create();
-
-    window_set_window_handlers(edit_alarm_window, (WindowHandlers) {
-        .load = setup_edit_alarm_window,
-        .unload = tear_down_edit_alarm_window,
-        .appear = update_edit_alarm_window
-    });
-    set_layers(
+    set_edit_alarm_layers(
         edit_alarm_active_layer,
         edit_alarm_time_hour_layer,
         edit_alarm_time_minute_layer,
         edit_alarm_action_bar_layer);
+}
+
+static void unload_edit_alarm_window(Window *window)
+{
+    text_layer_destroy(edit_alarm_active_layer);
+    text_layer_destroy(edit_alarm_time_hour_layer);
+    text_layer_destroy(edit_alarm_time_colon_layer);
+    text_layer_destroy(edit_alarm_time_minute_layer);
+    action_bar_layer_remove_from_window(edit_alarm_action_bar_layer);
+    action_bar_layer_destroy(edit_alarm_action_bar_layer);
+}
+
+void setup_edit_alarm_window(int edit_alarm_index)
+{
+    set_edit_alarm(edit_alarm_index);
+
+    edit_alarm_window = window_create();
+
+    window_set_window_handlers(edit_alarm_window, (WindowHandlers) {
+        .load = load_edit_alarm_window,
+        .unload = unload_edit_alarm_window,
+        .appear = update_edit_alarm_window
+    });
+
     window_stack_push(edit_alarm_window, true);
 }
 

@@ -12,7 +12,7 @@ static TextLayer *m_edit_alarm_time_minute_layer;
 
 static ActionBarLayer* m_edit_alarm_action_bar_layer;
 
-static AlarmTimeOfDay* m_edit_alarm;
+AlarmTimeOfDay* m_edit_alarm;
 static short m_current_edit_step = 0;
 
 static void save_alarm_and_go_back(ClickRecognizerRef recognizer, void* context)
@@ -45,37 +45,16 @@ static void un_highlight_minutes()
     text_layer_set_text_color(m_edit_alarm_time_minute_layer, GColorWhite);
 }
 
+static void update_alarm_active_text()
+{
+    text_layer_set_text(m_edit_alarm_active_layer, m_edit_alarm->active ? "Active" : "Inactive");
+}
+
 static void toggle_enabled(ClickRecognizerRef recognizer, void* context)
 {
     m_edit_alarm->active = !m_edit_alarm->active;
-    text_layer_set_text(m_edit_alarm_active_layer, m_edit_alarm->active ? "Active" : "Inactive");
+    update_alarm_active_text();
     save_data();
-}
-
-// static void increase_time(ClickRecognizerRef recognizer, void* context);
-// static void goto_next_edit(ClickRecognizerRef recognizer, void* context);
-// static void goto_previous_edit(ClickRecognizerRef recognizer, void* context);
-// static void decrease_time(ClickRecognizerRef recognizer, void* context);
-// static void save_alarm_and_go_back(ClickRecognizerRef recognizer, void* context);
-// static void update_edit_alarm_time_layers(Window* window);
-
-static void edit_time_action_bar_click_config_provider(void* context)
-{
-    window_single_repeating_click_subscribe(BUTTON_ID_UP, 100, increase_time);
-    window_single_click_subscribe(BUTTON_ID_SELECT, goto_next_edit);
-    window_single_click_subscribe(BUTTON_ID_BACK, goto_previous_edit);
-    window_single_repeating_click_subscribe(BUTTON_ID_DOWN, 100, decrease_time);
-}
-
-static void edit_time(ClickRecognizerRef recognizer, void* context)
-{
-    action_bar_layer_set_click_config_provider(m_edit_alarm_action_bar_layer, edit_time_action_bar_click_config_provider);
-    action_bar_layer_set_icon_animated(m_edit_alarm_action_bar_layer, BUTTON_ID_UP, get_up_icon(), true);
-    action_bar_layer_set_icon_animated(m_edit_alarm_action_bar_layer, BUTTON_ID_SELECT, get_play_icon(), true);
-    action_bar_layer_set_icon_animated(m_edit_alarm_action_bar_layer, BUTTON_ID_DOWN, get_down_icon(), true);
-    m_current_edit_step = 0;
-
-    highlight_hours();
 }
 
 static void increase_time(ClickRecognizerRef recognizer, void* context)
@@ -133,6 +112,8 @@ static void goto_next_edit(ClickRecognizerRef recognizer, void* context)
     if(m_current_edit_step > 1)
     {
         change_to_init_edit_alarm_actions();
+        m_edit_alarm->active = true;
+        update_alarm_active_text();
         un_highlight_minutes();
     } else if(m_current_edit_step == 1)
     {
@@ -153,6 +134,25 @@ static void goto_previous_edit(ClickRecognizerRef recognizer, void* context)
         highlight_hours();
         un_highlight_minutes();
     }
+}
+
+static void edit_time_action_bar_click_config_provider(void* context)
+{
+    window_single_repeating_click_subscribe(BUTTON_ID_UP, 100, increase_time);
+    window_single_click_subscribe(BUTTON_ID_SELECT, goto_next_edit);
+    window_single_click_subscribe(BUTTON_ID_BACK, goto_previous_edit);
+    window_single_repeating_click_subscribe(BUTTON_ID_DOWN, 100, decrease_time);
+}
+
+static void edit_time(ClickRecognizerRef recognizer, void* context)
+{
+    action_bar_layer_set_click_config_provider(m_edit_alarm_action_bar_layer, edit_time_action_bar_click_config_provider);
+    action_bar_layer_set_icon_animated(m_edit_alarm_action_bar_layer, BUTTON_ID_UP, get_up_icon(), true);
+    action_bar_layer_set_icon_animated(m_edit_alarm_action_bar_layer, BUTTON_ID_SELECT, get_play_icon(), true);
+    action_bar_layer_set_icon_animated(m_edit_alarm_action_bar_layer, BUTTON_ID_DOWN, get_down_icon(), true);
+    m_current_edit_step = 0;
+
+    highlight_hours();
 }
 
 void change_to_init_edit_alarm_actions()
@@ -183,7 +183,7 @@ void update_edit_alarm_time_layers()
     text_layer_set_text(m_edit_alarm_time_minute_layer, minute_buffer);
 }
 
-void set_layers(
+void set_edit_alarm_layers(
     TextLayer *edit_alarm_active_layer,
     TextLayer *edit_alarm_time_hour_layer,
     TextLayer *edit_alarm_time_minute_layer,
@@ -196,9 +196,9 @@ void set_layers(
     m_edit_alarm_action_bar_layer = edit_alarm_action_bar_layer;
 }
 
-void set_edit_alarm(AlarmTimeOfDay* edit_alarm)
+void set_edit_alarm(int edit_alarm_index)
 {
-    m_edit_alarm = edit_alarm;
+    m_edit_alarm = GetAlarm(edit_alarm_index);
 }
 
 AlarmTimeOfDay* get_edit_alarm()

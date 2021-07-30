@@ -28,7 +28,7 @@ static void setup_alarms_menu_layer(Layer *window_layer, GRect bounds)
     layer_add_child(window_layer, simple_menu_layer_get_layer(alarms_menu_layer));
 }
 
-static void setup_config_window(Window *config_window)
+static void load_config_menu_window(Window *config_window)
 {
     window_set_background_color(config_window, GColorBlack);
     Layer *config_window_layer = window_get_root_layer(config_window);
@@ -37,7 +37,7 @@ static void setup_config_window(Window *config_window)
     setup_alarms_menu_layer(config_window_layer, config_window_bounds);
 }
 
-void tear_down_config_window(Window *window)
+static void unload_config_menu_window(Window *window)
 {
     simple_menu_layer_destroy(alarms_menu_layer);
 }
@@ -47,8 +47,8 @@ void setup_config_menu_window()
     config_window = window_create();
 
     window_set_window_handlers(config_window, (WindowHandlers) {
-        .load = setup_config_window,
-        .unload = tear_down_config_window,
+        .load = load_config_menu_window,
+        .unload = unload_config_menu_window,
         .appear = update_config_menu
     });
 
