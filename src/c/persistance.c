@@ -5,43 +5,47 @@
 
 static const uint32_t DATA_KEY = 654654;
 static Data m_data;
+static bool m_data_loaded = false;
 
 static void seed_data()
 {
     for(uint8_t i = 0; i < MAX_ALARMS; i++)
     {
         m_data.alarms[i].index = i;
-        m_data.alarms[i].hour = 0;
-        m_data.alarms[i].minute = 0;
+        m_data.alarms[i].time.hour = 0;
+        m_data.alarms[i].time.minute = 0;
         m_data.alarms[i].active = false;
     }
     persist_write_data(DATA_KEY, &m_data, sizeof(Data));
 }
 
-AlarmTimeOfDay* GetAlarms()
+Alarm* get_alarms()
 {
     if(!persist_exists(DATA_KEY))
     {
         seed_data();
     }
-
-    persist_read_data(DATA_KEY, &m_data, sizeof(Data));
+    if(!m_data_loaded)
+    {
+        persist_read_data(DATA_KEY, &m_data, sizeof(Data));
+        m_data_loaded = true;
+    }
 
     return m_data.alarms;
 }
 
-AlarmTimeOfDay* GetAlarm(int index)
+Alarm* get_alarm(int index)
 {
-    return (GetAlarms() + index);
+    return (get_alarms() + index);
 }
 
-static uint32_t MinutesUntil(uint8_t currentHour, uint8_t currentMinutes, uint8_t targetHour, uint8_t targetMinute)
+static uint32_t minutes_until(uint8_t currentHour, uint8_t currentMinutes, uint8_t targetHour, uint8_t targetMinute)
 {
     uint32_t ret = 0;
 
     if(targetHour > currentHour)
     {
-        ret += ((targetHour - currentHour)*60);
+        ret += ((targetHour - currentHour)*MINUTES_PER_HOUR);
         if(targetMinute >= currentMinutes)
         {
             ret += targetMinute - currentMinutes;
@@ -56,11 +60,11 @@ static uint32_t MinutesUntil(uint8_t currentHour, uint8_t currentMinutes, uint8_
             ret += targetMinute - currentMinutes;
         } else
         {
-            ret = (24*60) - (currentMinutes - targetMinute);
+            ret = MINUTES_PER_DAY - (currentMinutes - targetMinute);
         }
     } else
     {
-        ret = (24 - currentHour + targetHour)*60;
+        ret = (HOURS_PER_DAY - currentHour + targetHour) * MINUTES_PER_HOUR;
         if(targetMinute >= currentMinutes)
         {
             ret += targetMinute - currentMinutes;
@@ -73,25 +77,30 @@ static uint32_t MinutesUntil(uint8_t currentHour, uint8_t currentMinutes, uint8_
     return ret;
 }
 
-AlarmTimeOfDay* GetNextAlarmTime()
+Alarm* get_next_alarm()
 {
-    time_t t = time(NULL);
-    struct tm* tm = localtime(&t);
-    uint8_t hour = tm->tm_hour;
-    uint8_t minute = tm->tm_min;
+    time_t now = time(NULL);
+    // time_t t = time(NULL);
+    // struct tm* tm = localtime(&t);
+    // uint8_t hour = tm->tm_hour;
+    // uint8_t minute = tm->tm_min;
 
-    AlarmTimeOfDay* alarms = GetAlarms();
-    AlarmTimeOfDay* next = NULL;
+    Alarm* alarms = get_alarms();
+    Alarm* next = NULL;
     uint32_t currentlyClosest = 0;
+    time_t wakup_time;
     for(int i = 0; i < MAX_ALARMS; i++)
     {
-        AlarmTimeOfDay* a = (alarms + i);
-        if(a != NULL && a->active)
+        Alarm* current = (alarms + i);
+        if(current != NULL && current->active)
         {
-            uint32_t minutesUntilAlarm = MinutesUntil(hour, minute, a->hour, a->minute);
+            wakeup_query(current->wakeup_id, &wakup_time);
+
+            uint32_t minutesUntilAlarm = (wakup_time - now)/SECONDS_PER_MINUTE;
+            // uint32_t minutesUntilAlarm = minutes_until(hour, minute, current->hour, current->minute);
             if(next == NULL || minutesUntilAlarm < currentlyClosest)
             {
-                next = a;
+                next = current;
                 currentlyClosest = minutesUntilAlarm;
             }
         }
@@ -99,48 +108,7 @@ AlarmTimeOfDay* GetNextAlarmTime()
     return next;
 }
 
-void ensure_all_alarms_set()
-{
-    wakeup_cancel_all();
-    AlarmTimeOfDay* alarms = GetAlarms();
-    time_t now = time(NULL);
-    for(int i = 0; i < MAX_ALARMS; i++)
-    {
-        AlarmTimeOfDay* current = (alarms + i);
-        if(current->active)
-        {
-            time_t t = clock_to_timestamp(TODAY, current->hour, current->minute);
-            if(t - now < 30)
-            {
-                t = t + (SECONDS_PER_DAY);
-            }
-            WakeupId id = wakeup_schedule(t, i, true);
-            if(id < 0)
-            {
-                switch (id)
-                {
-                case E_RANGE:
-                    APP_LOG(APP_LOG_LEVEL_ERROR, "ERROR: Another event in period");
-                    break;
-                case E_INVALID_ARGUMENT:
-                    APP_LOG(APP_LOG_LEVEL_ERROR, "ERROR: Time is in the past");
-                    break;
-                case E_OUT_OF_RESOURCES:
-                    APP_LOG(APP_LOG_LEVEL_ERROR, "ERROR: No more wakups for this app");
-                    break;
-                case E_INTERNAL:
-                    APP_LOG(APP_LOG_LEVEL_ERROR, "ERROR: system error occurred during scheduling");
-                    break;
-                default:
-                    break;
-                }
-            }
-        }
-    }
-}
-
 void save_data()
 {
     persist_write_data(DATA_KEY, &m_data, sizeof(Data));
-    ensure_all_alarms_set();
 }

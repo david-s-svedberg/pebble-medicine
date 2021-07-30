@@ -4,6 +4,7 @@
 
 #include "persistance.h"
 #include "format.h"
+#include "scheduler.h"
 
 static Window *m_alarm_window;
 
@@ -12,7 +13,7 @@ static TextLayer *m_snooze_time_layer;
 
 static ActionBarLayer* m_alarm_window_action_bar_layer;
 
-static AlarmTimeOfDay* m_wakup_alarm;
+static Alarm* m_wakup_alarm;
 static bool m_alarm_silenced = false;
 
 static uint16_t snooze_progression[] = {5, 10, 15, 30, 60, 90, 120};
@@ -69,6 +70,8 @@ static void take_medicine(ClickRecognizerRef recognizer, void* context)
     APP_LOG(APP_LOG_LEVEL_DEBUG, "take medicine requested");
     vibes_cancel();
     m_alarm_silenced = true;
+    schedule_alarm(m_wakup_alarm);
+    save_data();
     close_alarm();
 }
 
@@ -76,7 +79,8 @@ static void snooze_selection_done(void* data)
 {
     time_t t = time(NULL);
     t += (SECONDS_PER_MINUTE * m_snooze_minutes);
-    wakeup_schedule(t, m_wakup_alarm->index, true);
+    schedule_snooze_alarm(m_wakup_alarm, t);
+    save_data();
     close_alarm();
 }
 
@@ -121,7 +125,7 @@ void alarm_window_click_config_provider(void* context)
 char* get_wakeup_alarm_time_string()
 {
     static char alarm_time_buffer[6];
-    fill_time_string(alarm_time_buffer, m_wakup_alarm->hour, m_wakup_alarm->minute);
+    fill_time_string(alarm_time_buffer, m_wakup_alarm->time.hour, m_wakup_alarm->time.minute);
     return alarm_time_buffer;
 }
 
@@ -130,9 +134,8 @@ void setup_alarm_state()
     WakeupId id = 0;
     int32_t alarm_index = 0;
     wakeup_get_launch_event(&id, &alarm_index);
-    m_wakup_alarm = GetAlarm(alarm_index);
+    m_wakup_alarm = get_alarm(alarm_index);
     run_vibration(NULL);
-    ensure_all_alarms_set();
 }
 
 void set_alarm_layers(

@@ -5,6 +5,7 @@
 #include "persistance.h"
 #include "format.h"
 #include "icons.h"
+#include "scheduler.h"
 
 static TextLayer *m_edit_alarm_active_layer;
 static TextLayer *m_edit_alarm_time_hour_layer;
@@ -12,11 +13,15 @@ static TextLayer *m_edit_alarm_time_minute_layer;
 
 static ActionBarLayer* m_edit_alarm_action_bar_layer;
 
-AlarmTimeOfDay* m_edit_alarm;
+Alarm* m_edit_alarm;
 static short m_current_edit_step = 0;
 
 static void save_alarm_and_go_back(ClickRecognizerRef recognizer, void* context)
 {
+    if(m_edit_alarm->active)
+    {
+        reschedule_alarm(m_edit_alarm);
+    }
     save_data();
     window_stack_pop(true);
 }
@@ -54,29 +59,28 @@ static void toggle_enabled(ClickRecognizerRef recognizer, void* context)
 {
     m_edit_alarm->active = !m_edit_alarm->active;
     update_alarm_active_text();
-    save_data();
 }
 
 static void increase_time(ClickRecognizerRef recognizer, void* context)
 {
     if(m_current_edit_step == 0)
     {
-        if(m_edit_alarm->hour < 23)
+        if(m_edit_alarm->time.hour < 23)
         {
-            m_edit_alarm->hour++;
+            m_edit_alarm->time.hour++;
         } else
         {
-            m_edit_alarm->hour = 0;
+            m_edit_alarm->time.hour = 0;
         }
 
     } else if(m_current_edit_step == 1)
     {
-        if(m_edit_alarm->minute < 59)
+        if(m_edit_alarm->time.minute < 59)
         {
-            m_edit_alarm->minute++;
+            m_edit_alarm->time.minute++;
         } else
         {
-            m_edit_alarm->minute = 0;
+            m_edit_alarm->time.minute = 0;
         }
     }
     update_edit_alarm_time_layers();
@@ -86,21 +90,21 @@ static void decrease_time(ClickRecognizerRef recognizer, void* context)
 {
     if(m_current_edit_step == 0)
     {
-        if(m_edit_alarm->hour > 0)
+        if(m_edit_alarm->time.hour > 0)
         {
-            m_edit_alarm->hour--;
+            m_edit_alarm->time.hour--;
         } else
         {
-            m_edit_alarm->hour = 23;
+            m_edit_alarm->time.hour = 23;
         }
     } else if(m_current_edit_step == 1)
     {
-        if(m_edit_alarm->minute > 0)
+        if(m_edit_alarm->time.minute > 0)
         {
-            m_edit_alarm->minute--;
+            m_edit_alarm->time.minute--;
         } else
         {
-            m_edit_alarm->minute = 59;
+            m_edit_alarm->time.minute = 59;
         }
     }
     update_edit_alarm_time_layers();
@@ -176,8 +180,8 @@ void update_edit_alarm_time_layers()
 {
     static char hour_buffer[3];
     static char minute_buffer[3];
-    fill_time_unit_string(hour_buffer, m_edit_alarm->hour);
-    fill_time_unit_string(minute_buffer, m_edit_alarm->minute);
+    fill_time_unit_string(hour_buffer, m_edit_alarm->time.hour);
+    fill_time_unit_string(minute_buffer, m_edit_alarm->time.minute);
 
     text_layer_set_text(m_edit_alarm_time_hour_layer, hour_buffer);
     text_layer_set_text(m_edit_alarm_time_minute_layer, minute_buffer);
@@ -198,10 +202,10 @@ void set_edit_alarm_layers(
 
 void set_edit_alarm(int edit_alarm_index)
 {
-    m_edit_alarm = GetAlarm(edit_alarm_index);
+    m_edit_alarm = get_alarm(edit_alarm_index);
 }
 
-AlarmTimeOfDay* get_edit_alarm()
+Alarm* get_edit_alarm()
 {
     return m_edit_alarm;
 }

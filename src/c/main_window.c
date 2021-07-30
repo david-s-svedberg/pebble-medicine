@@ -32,9 +32,7 @@ static void setup_main_window_action_bar_layer(Layer *window_layer, GRect bounds
 
 static void update_next_alarm_text(Window *window)
 {
-    static char next_alarm_buffer[6];
-    fill_next_alarm_time(next_alarm_buffer);
-    text_layer_set_text(next_alarm_layer, next_alarm_buffer);
+    update_next_alarm_time();
 }
 
 static void setup_next_alarm_layer(Layer *window_layer, GRect bounds)
@@ -80,6 +78,7 @@ static void load_main_window(Window *window)
     setup_title_layer(window_layer, bounds);
     setup_next_alarm_layer(window_layer, bounds);
     setup_main_window_action_bar_layer(window_layer, bounds);
+    set_main_window_layers(next_alarm_layer);
 }
 
 static void unload_main_window(Window *window)

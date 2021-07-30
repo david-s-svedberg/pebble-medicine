@@ -8,22 +8,34 @@ static Window *config_window;
 
 static SimpleMenuLayer* alarms_menu_layer;
 
-static SimpleMenuItem m_menu_items[5];
-static SimpleMenuSection m_menu;
+static SimpleMenuItem m_alarm_items[5];
+static SimpleMenuItem m_reset_items[1];
+static SimpleMenuSection m_alarms_section;
+static SimpleMenuSection m_reset_sections;
+static SimpleMenuSection m_menu[2];
 
 static void update_config_menu(Window* config_window)
 {
-    update_config_menu_items(m_menu_items);
+    update_config_menu_items(m_alarm_items);
     layer_mark_dirty(simple_menu_layer_get_layer(alarms_menu_layer));
 }
 
 static void setup_alarms_menu_layer(Layer *window_layer, GRect bounds)
 {
-    m_menu.num_items = 5;
-    m_menu.title = "Alarms";
-    m_menu.items = m_menu_items;
+    m_alarms_section.num_items = 5;
+    m_alarms_section.title = "Alarms";
+    m_alarms_section.items = m_alarm_items;
 
-    alarms_menu_layer = simple_menu_layer_create(bounds, config_window, &m_menu, 1, NULL);
+    m_reset_items[0].title = "Reset";
+    m_reset_items[0].callback = reset_alarms;
+
+    m_reset_sections.num_items = 1;
+    m_reset_sections.title = "Reset";
+    m_reset_sections.items = m_reset_items;
+
+    m_menu[0] = m_alarms_section;
+    m_menu[1] = m_reset_sections;
+    alarms_menu_layer = simple_menu_layer_create(bounds, config_window, m_menu, 2, NULL);
 
     layer_add_child(window_layer, simple_menu_layer_get_layer(alarms_menu_layer));
 }
