@@ -8,6 +8,8 @@
 
 static Window *alarm_window;
 
+static StatusBarLayer* status_bar;
+
 static TextLayer *alarm_title_layer;
 static TextLayer *alarm_time_layer;
 static TextLayer *snooze_time_layer;
@@ -28,7 +30,7 @@ static void setup_alarm_window_action_bar_layer(Layer *window_layer, GRect bound
 
 static void setup_alarm_title_layer(Layer *window_layer, GRect bounds)
 {
-    alarm_title_layer = text_layer_create(GRect(0, 0, bounds.size.w - ACTION_BAR_WIDTH, 60));
+    alarm_title_layer = text_layer_create(GRect(0, STATUS_BAR_LAYER_HEIGHT, bounds.size.w - ACTION_BAR_WIDTH, 60));
 
     text_layer_set_background_color(alarm_title_layer, GColorBlack);
     text_layer_set_text_color(alarm_title_layer, GColorWhite);
@@ -42,7 +44,7 @@ static void setup_alarm_title_layer(Layer *window_layer, GRect bounds)
 
 static void setup_alarm_time_layer(Layer *window_layer, GRect bounds)
 {
-    alarm_time_layer = text_layer_create(GRect(0, 67, bounds.size.w - ACTION_BAR_WIDTH, 60));
+    alarm_time_layer = text_layer_create(GRect(0, 72, bounds.size.w - ACTION_BAR_WIDTH, 60));
 
     text_layer_set_background_color(alarm_time_layer, GColorBlack);
     text_layer_set_text_color(alarm_time_layer, GColorWhite);
@@ -69,6 +71,16 @@ static void setup_alarm_snooze_time_layer(Layer *window_layer, GRect bounds)
     layer_add_child(window_layer, text_layer_get_layer(snooze_time_layer));
 }
 
+static void setup_status_bar(Layer *window_layer, GRect bounds)
+{
+    status_bar = status_bar_layer_create();
+
+    status_bar_layer_set_colors(status_bar, GColorBlack, GColorWhite);
+    status_bar_layer_set_separator_mode(status_bar, StatusBarLayerSeparatorModeDotted);
+
+    layer_add_child(window_layer, status_bar_layer_get_layer(status_bar));
+}
+
 static void load_alarm_window(Window *window)
 {
     window_set_background_color(window, GColorBlack);
@@ -79,6 +91,7 @@ static void load_alarm_window(Window *window)
     setup_alarm_time_layer(window_layer, bounds);
     setup_alarm_snooze_time_layer(window_layer, bounds);
     setup_alarm_window_action_bar_layer(window_layer, bounds);
+    setup_status_bar(window_layer, bounds);
 
     set_alarm_layers(alarm_time_layer, snooze_time_layer, alarm_window_action_bar_layer);
 }
@@ -90,6 +103,7 @@ static void unload_alarm_window(Window *window)
     text_layer_destroy(snooze_time_layer);
     action_bar_layer_remove_from_window(alarm_window_action_bar_layer);
     action_bar_layer_destroy(alarm_window_action_bar_layer);
+    status_bar_layer_destroy(status_bar);
 }
 
 void setup_alarm_window(int32_t alarm_index)

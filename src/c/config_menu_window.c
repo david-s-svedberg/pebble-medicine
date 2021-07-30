@@ -6,6 +6,8 @@
 
 static Window *config_window;
 
+static StatusBarLayer* status_bar;
+
 static SimpleMenuLayer* alarms_menu_layer;
 
 static SimpleMenuItem m_alarm_items[5];
@@ -35,9 +37,22 @@ static void setup_alarms_menu_layer(Layer *window_layer, GRect bounds)
 
     m_menu[0] = m_alarms_section;
     m_menu[1] = m_reset_sections;
-    alarms_menu_layer = simple_menu_layer_create(bounds, config_window, m_menu, 2, NULL);
+    alarms_menu_layer = simple_menu_layer_create(
+        GRect(0, STATUS_BAR_LAYER_HEIGHT, bounds.size.w, bounds.size.h - STATUS_BAR_LAYER_HEIGHT),
+        config_window,
+        m_menu, 2, NULL);
 
     layer_add_child(window_layer, simple_menu_layer_get_layer(alarms_menu_layer));
+}
+
+static void setup_status_bar(Layer *window_layer, GRect bounds)
+{
+    status_bar = status_bar_layer_create();
+
+    status_bar_layer_set_colors(status_bar, GColorBlack, GColorWhite);
+    status_bar_layer_set_separator_mode(status_bar, StatusBarLayerSeparatorModeDotted);
+
+    layer_add_child(window_layer, status_bar_layer_get_layer(status_bar));
 }
 
 static void load_config_menu_window(Window *config_window)
@@ -47,11 +62,13 @@ static void load_config_menu_window(Window *config_window)
     GRect config_window_bounds = layer_get_bounds(config_window_layer);
 
     setup_alarms_menu_layer(config_window_layer, config_window_bounds);
+    setup_status_bar(config_window_layer, config_window_bounds);
 }
 
 static void unload_config_menu_window(Window *window)
 {
     simple_menu_layer_destroy(alarms_menu_layer);
+    status_bar_layer_destroy(status_bar);
 }
 
 void setup_config_menu_window()

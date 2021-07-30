@@ -7,9 +7,11 @@
 
 static Window *main_window;
 
-static TextLayer *title_layer;
-static TextLayer *next_alarm_label_layer;
-static TextLayer *next_alarm_layer;
+static StatusBarLayer* status_bar;
+
+static TextLayer* title_layer;
+static TextLayer* next_alarm_label_layer;
+static TextLayer* next_alarm_layer;
 
 static ActionBarLayer* main_window_action_bar_layer;
 
@@ -37,8 +39,8 @@ static void update_next_alarm_text(Window *window)
 
 static void setup_next_alarm_layer(Layer *window_layer, GRect bounds)
 {
-    next_alarm_label_layer = text_layer_create(GRect(0, 70, bounds.size.w - 10, 30));
-    next_alarm_layer = text_layer_create(GRect(0, 94, bounds.size.w - 10, 30));
+    next_alarm_label_layer = text_layer_create(GRect(0, 80, bounds.size.w - 10, 30));
+    next_alarm_layer = text_layer_create(GRect(0, 104, bounds.size.w - 10, 30));
 
     text_layer_set_background_color(next_alarm_label_layer, GColorBlack);
     text_layer_set_background_color(next_alarm_layer, GColorBlack);
@@ -57,7 +59,7 @@ static void setup_next_alarm_layer(Layer *window_layer, GRect bounds)
 
 static void setup_title_layer(Layer *window_layer, GRect bounds)
 {
-    title_layer = text_layer_create(GRect(0, 0, bounds.size.w - ACTION_BAR_WIDTH, 60));
+    title_layer = text_layer_create(GRect(0, STATUS_BAR_LAYER_HEIGHT, bounds.size.w - ACTION_BAR_WIDTH, 60));
 
     text_layer_set_background_color(title_layer, GColorBlack);
     text_layer_set_text_color(title_layer, GColorWhite);
@@ -69,6 +71,16 @@ static void setup_title_layer(Layer *window_layer, GRect bounds)
     layer_add_child(window_layer, text_layer_get_layer(title_layer));
 }
 
+static void setup_status_bar(Layer *window_layer, GRect bounds)
+{
+    status_bar = status_bar_layer_create();
+
+    status_bar_layer_set_colors(status_bar, GColorBlack, GColorWhite);
+    status_bar_layer_set_separator_mode(status_bar, StatusBarLayerSeparatorModeDotted);
+
+    layer_add_child(window_layer, status_bar_layer_get_layer(status_bar));
+}
+
 static void load_main_window(Window *window)
 {
     window_set_background_color(window, GColorBlack);
@@ -78,11 +90,14 @@ static void load_main_window(Window *window)
     setup_title_layer(window_layer, bounds);
     setup_next_alarm_layer(window_layer, bounds);
     setup_main_window_action_bar_layer(window_layer, bounds);
+    setup_status_bar(window_layer, bounds);
+
     set_main_window_layers(next_alarm_layer);
 }
 
 static void unload_main_window(Window *window)
 {
+    status_bar_layer_destroy(status_bar);
     text_layer_destroy(title_layer);
     text_layer_destroy(next_alarm_layer);
     text_layer_destroy(next_alarm_label_layer);

@@ -8,6 +8,8 @@
 
 static Window *edit_alarm_window;
 
+static StatusBarLayer* status_bar;
+
 static TextLayer *edit_alarm_active_layer;
 static TextLayer *edit_alarm_time_hour_layer;
 static TextLayer *edit_alarm_time_colon_layer;
@@ -78,6 +80,16 @@ static void setup_edit_alarm_time_layer(Layer *window_layer, GRect bounds)
     layer_add_child(window_layer, text_layer_get_layer(edit_alarm_time_minute_layer));
 }
 
+static void setup_status_bar(Layer *window_layer, GRect bounds)
+{
+    status_bar = status_bar_layer_create();
+
+    status_bar_layer_set_colors(status_bar, GColorBlack, GColorWhite);
+    status_bar_layer_set_separator_mode(status_bar, StatusBarLayerSeparatorModeDotted);
+
+    layer_add_child(window_layer, status_bar_layer_get_layer(status_bar));
+}
+
 static void load_edit_alarm_window(Window *edit_alarm_window)
 {
     window_set_background_color(edit_alarm_window, GColorBlack);
@@ -87,6 +99,7 @@ static void load_edit_alarm_window(Window *edit_alarm_window)
     setup_edit_alarm_action_bar_layer(edit_alarm_window_layer, edit_alarm_window_bounds);
     setup_edit_alarm_active_layer(edit_alarm_window_layer, edit_alarm_window_bounds);
     setup_edit_alarm_time_layer(edit_alarm_window_layer, edit_alarm_window_bounds);
+    setup_status_bar(edit_alarm_window_layer, edit_alarm_window_bounds);
 
     set_edit_alarm_layers(
         edit_alarm_active_layer,
@@ -103,6 +116,7 @@ static void unload_edit_alarm_window(Window *window)
     text_layer_destroy(edit_alarm_time_minute_layer);
     action_bar_layer_remove_from_window(edit_alarm_action_bar_layer);
     action_bar_layer_destroy(edit_alarm_action_bar_layer);
+    status_bar_layer_destroy(status_bar);
 }
 
 void setup_edit_alarm_window(int edit_alarm_index)
