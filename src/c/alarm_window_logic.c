@@ -129,11 +129,8 @@ char* get_wakeup_alarm_time_string()
     return alarm_time_buffer;
 }
 
-void setup_alarm_state()
+void setup_alarm_state(int32_t alarm_index)
 {
-    WakeupId id = 0;
-    int32_t alarm_index = 0;
-    wakeup_get_launch_event(&id, &alarm_index);
     m_wakup_alarm = get_alarm(alarm_index);
     run_vibration(NULL);
 }

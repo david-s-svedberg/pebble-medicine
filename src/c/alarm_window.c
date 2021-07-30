@@ -92,9 +92,9 @@ static void unload_alarm_window(Window *window)
     action_bar_layer_destroy(alarm_window_action_bar_layer);
 }
 
-void setup_alarm_window()
+void setup_alarm_window(int32_t alarm_index)
 {
-    setup_alarm_state();
+    setup_alarm_state(alarm_index);
     alarm_window = window_create();
     set_alarm_window(alarm_window);
     window_set_window_handlers(alarm_window, (WindowHandlers) {

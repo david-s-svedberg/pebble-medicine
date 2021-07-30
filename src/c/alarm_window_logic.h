@@ -9,6 +9,6 @@ void set_alarm_layers(
     TextLayer* alarm_time_layer,
     TextLayer* snooze_time_layer,
     ActionBarLayer* alarm_window_action_bar_layer);
-void setup_alarm_state();
+void setup_alarm_state(int32_t alarm_index);
 void alarm_window_click_config_provider(void* context);
 char* get_wakeup_alarm_time_string();
