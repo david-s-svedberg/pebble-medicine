@@ -21,7 +21,7 @@ static void seed_data()
 
 Alarm* get_alarms()
 {
-    if(!persist_exists(DATA_KEY))
+    if(!has_any_data())
     {
         seed_data();
     }
@@ -106,6 +106,11 @@ Alarm* get_next_alarm()
         }
     }
     return next;
+}
+
+bool has_any_data()
+{
+    return persist_exists(DATA_KEY);
 }
 
 void save_data()

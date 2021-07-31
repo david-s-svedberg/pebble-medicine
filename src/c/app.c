@@ -7,14 +7,27 @@
 
 #include "icons.h"
 #include "app_glance.h"
+#include "persistance.h"
 
 static void wakeup_handler(WakeupId id, int32_t alarm_index)
 {
     setup_alarm_window(alarm_index);
 }
+static bool first_start()
+{
+    return !has_any_data();
+}
 
 void init()
 {
+    if(first_start())
+    {
+        APP_LOG(APP_LOG_LEVEL_INFO, "Removing old wake ups");
+        // Mostly for development
+        // But old wake ups are not removed when reinstalling app
+        // So we remove them so no collisions happen
+        wakeup_cancel_all();
+    }
     if(launch_reason() == APP_LAUNCH_WAKEUP)
     {
         APP_LOG(APP_LOG_LEVEL_DEBUG, "Starting from Wakeup");

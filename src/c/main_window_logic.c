@@ -23,6 +23,7 @@ static void fill_next_alarm_time(char* buf)
 void take_next_medicine(ClickRecognizerRef recognizer, void* context)
 {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Take next medicine requested");
+    vibes_long_pulse();
     Alarm* next = get_next_alarm();
     if(next != NULL)
     {
