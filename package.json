@@ -73,6 +73,28 @@
                     "type": "bitmap"
                 },
                 {
+                    "file": "images/alarm16_16_trans.png",
+                    "name": "ALARM_ICON_TRANS",
+                    "spaceOptimization": "memory",
+                    "targetPlatforms": [
+                        "diorite",
+                        "basalt",
+                        "aplite"
+                    ],
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/no_alarm16_16_trans.png",
+                    "name": "NO_ALARM_ICON_TRANS",
+                    "spaceOptimization": "memory",
+                    "targetPlatforms": [
+                        "diorite",
+                        "basalt",
+                        "aplite"
+                    ],
+                    "type": "bitmap"
+                },
+                {
                     "file": "images/edit15_15.png",
                     "name": "EDIT_ICON",
                     "spaceOptimization": "memory",
