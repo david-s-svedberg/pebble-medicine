@@ -12,6 +12,7 @@ static GBitmap *down_icon;
 static GBitmap *play_icon;
 static GBitmap *snooze_icon;
 static GBitmap *silence_icon;
+static GBitmap *pill_icon;
 
 static GBitmap* get_icon(uint32_t id, GBitmap* icon)
 {
@@ -91,6 +92,11 @@ GBitmap* get_silence_icon()
     return get_icon(RESOURCE_ID_SILENCE_ICON, silence_icon);
 }
 
+GBitmap* get_pill_icon()
+{
+    return get_icon(RESOURCE_ID_PILL_ICON, pill_icon);
+}
+
 void destroy_all_icons()
 {
     destroy_icon(check_icon);
@@ -105,4 +111,5 @@ void destroy_all_icons()
     destroy_icon(play_icon);
     destroy_icon(snooze_icon);
     destroy_icon(silence_icon);
+    destroy_icon(pill_icon);
 }

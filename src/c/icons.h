@@ -14,5 +14,6 @@ GBitmap* get_down_icon();
 GBitmap* get_play_icon();
 GBitmap* get_snooze_icon();
 GBitmap* get_silence_icon();
+GBitmap* get_pill_icon();
 
 void destroy_all_icons();

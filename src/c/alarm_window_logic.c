@@ -19,6 +19,7 @@ static bool m_alarm_silenced = false;
 static uint16_t snooze_progression[] = {5, 10, 15, 30, 60, 90, 120};
 static uint16_t m_snooze_minutes = 5;
 static AppTimer* m_snooze_selection_done = NULL;
+static AppTimer* m_silenced_timedout = NULL;
 
 static const uint32_t const segments[] = { 50 };
 static const VibePattern m_vibration_pattern =
@@ -56,8 +57,16 @@ static void silence_alarm(ClickRecognizerRef recognizer, void* context)
     APP_LOG(APP_LOG_LEVEL_DEBUG, "silence alarm requested");
     vibes_cancel();
     m_alarm_silenced = true;
+    bool rescheduled = false;
+    if(m_silenced_timedout != NULL)
+    {
+        rescheduled = app_timer_reschedule(m_silenced_timedout, FIVE_MINUTES_IN_MS);
+    }
+    if(!rescheduled)
+    {
+        m_silenced_timedout = app_timer_register(FIVE_MINUTES_IN_MS, silence_timed_out, NULL);
+    }
 
-    app_timer_register(FIVE_MINUTES_IN_MS, silence_timed_out, NULL);
 }
 
 static void take_medicine(ClickRecognizerRef recognizer, void* context)

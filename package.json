@@ -16,6 +16,13 @@
         ],
         "projectType": "native",
         "resources": {
+            "publishedMedia": [
+                {
+                  "name": "APP_GLANCE_ICON",
+                  "id": 1,
+                  "glance": "PILL_ICON"
+                }
+            ],
             "media": [
                 {
                     "file": "images/steps.png",
@@ -64,28 +71,6 @@
                 {
                     "file": "images/no_alarm16_16.png",
                     "name": "NO_ALARM_ICON",
-                    "spaceOptimization": "memory",
-                    "targetPlatforms": [
-                        "diorite",
-                        "basalt",
-                        "aplite"
-                    ],
-                    "type": "bitmap"
-                },
-                {
-                    "file": "images/alarm16_16_trans.png",
-                    "name": "ALARM_ICON_TRANS",
-                    "spaceOptimization": "memory",
-                    "targetPlatforms": [
-                        "diorite",
-                        "basalt",
-                        "aplite"
-                    ],
-                    "type": "bitmap"
-                },
-                {
-                    "file": "images/no_alarm16_16_trans.png",
-                    "name": "NO_ALARM_ICON_TRANS",
                     "spaceOptimization": "memory",
                     "targetPlatforms": [
                         "diorite",
@@ -163,6 +148,11 @@
                 {
                     "file": "images/pill.png",
                     "name": "PILL_ICON",
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/alarm16_16_trans.png",
+                    "name": "ALARM_ICON_TRANS",
                     "spaceOptimization": "memory",
                     "targetPlatforms": [
                         "diorite",
@@ -170,13 +160,17 @@
                         "aplite"
                     ],
                     "type": "bitmap"
-                }
-            ],
-            "publishedMedia": [
+                },
                 {
-                  "name": "PILL_ICON",
-                  "id": 1,
-                  "glance": "PILL_ICON"
+                    "file": "images/no_alarm16_16_trans.png",
+                    "name": "NO_ALARM_ICON_TRANS",
+                    "spaceOptimization": "memory",
+                    "targetPlatforms": [
+                        "diorite",
+                        "basalt",
+                        "aplite"
+                    ],
+                    "type": "bitmap"
                 }
             ]
         },

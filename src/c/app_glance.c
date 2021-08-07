@@ -8,7 +8,7 @@ static void set_app_glance(AppGlanceReloadSession *session, size_t limit, void *
 
     const AppGlanceSlice entry = (AppGlanceSlice) {
         .layout = {
-            .icon = PUBLISHED_ID_PILL_ICON
+            .icon = PUBLISHED_ID_APP_GLANCE_ICON
         },
         .expiration_time = APP_GLANCE_SLICE_NO_EXPIRATION
     };
