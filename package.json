@@ -1,14 +1,8 @@
 {
     "author": "david.s.svedberg@gmail.com",
-    "dependencies": {
-        "pebble-clay": "^1.0.3"
-    },
     "keywords": [],
-    "name": "Meds",
+    "name": "meds",
     "pebble": {
-        "capabilities": [
-            "configurable"
-        ],
         "displayName": "Meds",
         "enableMultiJS": true,
         "messageKeys": [
@@ -180,7 +174,7 @@
             "aplite",
             "basalt"
         ],
-        "uuid": "3c19d566-1000-4731-8536-667795f95763",
+        "uuid": "b60baf1a-4dbf-4daf-8c55-0560c4b982a8",
         "watchapp": {
             "watchface": false
         }

@@ -1,0 +1,8 @@
+App title               Meds
+Website                 https://github.com/david-s-svedberg/pebble-medicine
+Source code URL         https://github.com/david-s-svedberg/pebble-medicine
+Support email address   david.s.svedberg@gmail.com
+Category                Tools & Utilities
+
+Description:
+Simple app to get reminders to take your medicine
