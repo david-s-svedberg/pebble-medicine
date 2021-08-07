@@ -21,6 +21,9 @@ static void save_alarm_and_go_back(ClickRecognizerRef recognizer, void* context)
     if(m_edit_alarm->active)
     {
         reschedule_alarm(m_edit_alarm);
+    } else
+    {
+        unschedule_alarm(m_edit_alarm);
     }
     save_data();
     window_stack_pop(true);
