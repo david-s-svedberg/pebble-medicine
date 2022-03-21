@@ -1,0 +1,21 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/usr/include/**",
+                "/root/.pebble-sdk/SDKs/4.3/sdk-core/pebble/**",
+                "/usr/lib/gcc/x86_64-linux-gnu/7.5.0/include"
+            ],
+            "defines": [
+
+            ],
+            "compilerPath": "/root/pebble-dev/pebble-sdk-4.5-linux64/arm-cs-tools/arm-none-eabi/bin/gcc",
+            "cStandard": "c99",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-arm"
+        }
+    ],
+    "version": 4
+}

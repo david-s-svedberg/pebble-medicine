@@ -1,0 +1,14 @@
+{
+    "C_Cpp.default.includePath" :
+    [
+        "/root/.pebble-sdk/SDKs/4.3/sdk-core/pebble/**"
+    ],
+    "files.associations": {
+        "pebble.h": "c",
+        "message_keys.auto.h": "c",
+        "cstdbool": "cpp",
+        "cstdio": "c",
+        "persistance.h": "c",
+        "scheduler.h": "c"
+    }
+}
