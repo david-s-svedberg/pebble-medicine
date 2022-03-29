@@ -9,6 +9,7 @@
         "cstdbool": "cpp",
         "cstdio": "c",
         "persistance.h": "c",
-        "scheduler.h": "c"
+        "scheduler.h": "c",
+        "gcolor_definitions.h": "c"
     }
 }

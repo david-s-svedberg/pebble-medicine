@@ -52,7 +52,7 @@ static void silence_timed_out(void* data)
     run_vibration(NULL);
 }
 
-static void silence_alarm(ClickRecognizerRef recognizer, void* context)
+static void silence_alarm_handler(ClickRecognizerRef recognizer, void* context)
 {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "silence alarm requested");
     vibes_cancel();
@@ -69,13 +69,11 @@ static void silence_alarm(ClickRecognizerRef recognizer, void* context)
 
 }
 
-static void take_medicine(ClickRecognizerRef recognizer, void* context)
+static void take_medicine_handler(ClickRecognizerRef recognizer, void* context)
 {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "take medicine requested");
     vibes_cancel();
     m_alarm_silenced = true;
-    schedule_alarm(m_wakup_alarm);
-    save_data();
     close_alarm();
 }
 
@@ -90,7 +88,7 @@ static void snooze_selection_done(void* data)
 
 static uint8_t m_clicks = 0;
 
-static void snooze_alarm(ClickRecognizerRef recognizer, void* context)
+static void snooze_alarm_handler(ClickRecognizerRef recognizer, void* context)
 {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "snooze alarm requested");
 
@@ -100,6 +98,9 @@ static void snooze_alarm(ClickRecognizerRef recognizer, void* context)
     snprintf(snooze_text_buffer, sizeof(snooze_text_buffer), "%dm", m_snooze_minutes);
     text_layer_set_text(m_snooze_time_layer, snooze_text_buffer);
     m_alarm_silenced = true;
+
+    vibes_short_pulse();
+
     if(m_snooze_selection_done != NULL)
     {
         app_timer_reschedule(m_snooze_selection_done, 1000);
@@ -109,7 +110,7 @@ static void snooze_alarm(ClickRecognizerRef recognizer, void* context)
     }
 }
 
-static void handle_back_alarm(ClickRecognizerRef recognizer, void* context)
+static void back_alarm_handler(ClickRecognizerRef recognizer, void* context)
 {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "back pressed on alarm");
     time_t t = time(NULL);
@@ -120,10 +121,10 @@ static void handle_back_alarm(ClickRecognizerRef recognizer, void* context)
 
 void alarm_window_click_config_provider(void* context)
 {
-    window_single_click_subscribe(BUTTON_ID_UP, silence_alarm);
-    window_single_click_subscribe(BUTTON_ID_BACK, handle_back_alarm);
-    window_single_click_subscribe(BUTTON_ID_SELECT, take_medicine);
-    window_single_repeating_click_subscribe(BUTTON_ID_DOWN, 500, snooze_alarm);
+    window_single_click_subscribe(BUTTON_ID_UP, silence_alarm_handler);
+    window_single_click_subscribe(BUTTON_ID_BACK, back_alarm_handler);
+    window_single_click_subscribe(BUTTON_ID_SELECT, take_medicine_handler);
+    window_single_repeating_click_subscribe(BUTTON_ID_DOWN, 500, snooze_alarm_handler);
 }
 
 char* get_wakeup_alarm_time_string()
@@ -135,7 +136,9 @@ char* get_wakeup_alarm_time_string()
 
 void setup_alarm_state(int32_t alarm_index)
 {
-    m_wakup_alarm = get_alarm(alarm_index);
+    m_wakup_alarm = alarm_index == SNOOZED_ALARM_ID ? get_snooze_alarm() : get_alarm(alarm_index);
+    schedule_alarm(m_wakup_alarm);
+    save_data();
     run_vibration(NULL);
 }
 
@@ -148,6 +151,7 @@ void set_alarm_layers(
     m_snooze_time_layer = snooze_time_layer;
     m_alarm_window_action_bar_layer = alarm_window_action_bar_layer;
 }
+
 void set_alarm_window(Window* alarm_window)
 {
     m_alarm_window = alarm_window;

@@ -4,10 +4,6 @@
     "name": "meds",
     "pebble": {
         "displayName": "Meds",
-        "enableMultiJS": true,
-        "messageKeys": [
-            "Language"
-        ],
         "projectType": "native",
         "resources": {
             "publishedMedia": [
@@ -179,5 +175,5 @@
             "watchface": false
         }
     },
-    "version": "1.0.0"
+    "version": "1.1.0"
 }

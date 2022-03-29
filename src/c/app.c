@@ -8,10 +8,11 @@
 #include "icons.h"
 #include "app_glance.h"
 #include "persistance.h"
+#include "scheduler.h"
 
 static void wakeup_handler(WakeupId id, int32_t alarm_index)
 {
-    setup_alarm_window(alarm_index);
+    setup_alarm_window(alarm_index, get_background_color(), get_foreground_color());
 }
 static bool first_start()
 {
@@ -36,14 +37,21 @@ void init()
         int32_t alarm_index = 0;
         wakeup_get_launch_event(&id, &alarm_index);
 
-        setup_alarm_window(alarm_index);
+        if(alarm_index == SUMMER_TIME_ALARM_ID)
+        {
+            wakeup_cancel_all();
+            ensure_all_alarms_scheduled();
+        } else
+        {
+            setup_alarm_window(alarm_index, get_background_color(), get_foreground_color());
+        }
     } else
     {
         APP_LOG(APP_LOG_LEVEL_DEBUG, "Starting from non Wakeup");
 
         wakeup_service_subscribe(wakeup_handler);
 
-        setup_main_window();
+        setup_main_window(get_background_color(), get_foreground_color());
     }
 }
 

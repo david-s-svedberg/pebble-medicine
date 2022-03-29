@@ -2,24 +2,40 @@
 
 #include <pebble.h>
 #include <stdbool.h>
+#include <gcolor_definitions.h>
 
 static const uint32_t DATA_KEY = 654654;
 static Data m_data;
 static bool m_data_loaded = false;
 
+static Alarm create_alarm(uint8_t index)
+{
+    Alarm alarm;
+
+    alarm.index = index;
+    alarm.time.hour = 0;
+    alarm.time.minute = 0;
+    alarm.active = false;
+
+    return alarm;
+}
+
 static void seed_data()
 {
     for(uint8_t i = 0; i < MAX_ALARMS; i++)
     {
-        m_data.alarms[i].index = i;
-        m_data.alarms[i].time.hour = 0;
-        m_data.alarms[i].time.minute = 0;
-        m_data.alarms[i].active = false;
+        m_data.alarms[i] = create_alarm(i);
     }
+    m_data.snooze_alarm = create_alarm(SNOOZED_ALARM_ID);
+    m_data.summer_time_alarm = create_alarm(SUMMER_TIME_ALARM_ID);
+    m_data.summer_time_alarm.time.hour = 3;
+    m_data.summer_time_alarm.time.minute = 30;
+    m_data.background_color = GColorBlack;
+    m_data.foreground_color = GColorWhite;
     persist_write_data(DATA_KEY, &m_data, sizeof(Data));
 }
 
-Alarm* get_alarms()
+static Data* get_data()
 {
     if(!has_any_data())
     {
@@ -30,8 +46,12 @@ Alarm* get_alarms()
         persist_read_data(DATA_KEY, &m_data, sizeof(Data));
         m_data_loaded = true;
     }
+    return &m_data;
+}
 
-    return m_data.alarms;
+Alarm* get_alarms()
+{
+    return get_data()->alarms;
 }
 
 Alarm* get_alarm(int index)
@@ -77,35 +97,43 @@ static uint32_t minutes_until(uint8_t currentHour, uint8_t currentMinutes, uint8
     return ret;
 }
 
-Alarm* get_next_alarm()
+static Alarm* get_next_schedueled(Alarm** alarms, size_t number_of_alarms)
 {
     time_t now = time(NULL);
-    // time_t t = time(NULL);
-    // struct tm* tm = localtime(&t);
-    // uint8_t hour = tm->tm_hour;
-    // uint8_t minute = tm->tm_min;
-
-    Alarm* alarms = get_alarms();
     Alarm* next = NULL;
     uint32_t currentlyClosest = 0;
     time_t wakup_time;
-    for(int i = 0; i < MAX_ALARMS; i++)
+    for(size_t i = 0; i < number_of_alarms; i++)
     {
-        Alarm* current = (alarms + i);
+        Alarm* current = *(alarms + i);
         if(current != NULL && current->active)
         {
-            wakeup_query(current->wakeup_id, &wakup_time);
-
-            uint32_t minutesUntilAlarm = (wakup_time - now)/SECONDS_PER_MINUTE;
-            // uint32_t minutesUntilAlarm = minutes_until(hour, minute, current->hour, current->minute);
-            if(next == NULL || minutesUntilAlarm < currentlyClosest)
+            bool scheduled = wakeup_query(current->wakeup_id, &wakup_time);
+            if(scheduled)
             {
-                next = current;
-                currentlyClosest = minutesUntilAlarm;
+                uint32_t minutesUntilAlarm = (wakup_time - now)/SECONDS_PER_MINUTE;
+                if(next == NULL || minutesUntilAlarm < currentlyClosest)
+                {
+                    next = current;
+                    currentlyClosest = minutesUntilAlarm;
+                }
             }
         }
     }
     return next;
+}
+
+Alarm* get_next_alarm()
+{
+    Alarm* all_alarms[MAX_ALARMS + 1];
+
+    for(int i = 0; i < MAX_ALARMS ; i++)
+    {
+        all_alarms[i] = get_alarm(i);
+    }
+    all_alarms[MAX_ALARMS] = get_snooze_alarm();
+
+    return get_next_schedueled(all_alarms, sizeof(all_alarms)/sizeof(all_alarms[0]));
 }
 
 bool has_any_data()
@@ -116,4 +144,37 @@ bool has_any_data()
 void save_data()
 {
     persist_write_data(DATA_KEY, &m_data, sizeof(Data));
+}
+
+GColor8 get_background_color()
+{
+    return get_data()->background_color;
+}
+
+GColor8 get_foreground_color()
+{
+    return get_data()->foreground_color;
+}
+
+bool is_dark_theme()
+{
+    uint8_t background = get_background_color().argb;
+    uint8_t black = GColorBlack.argb;
+    return (background == black);
+}
+
+void toggle_theme()
+{
+    Data* data = get_data();
+    GColor8 previous_background_color = data->background_color;
+    GColor8 previous_foreground_color = data->foreground_color;
+
+    data->background_color = previous_foreground_color;
+    data->foreground_color = previous_background_color;
+    save_data();
+}
+
+Alarm* get_snooze_alarm()
+{
+    return &get_data()->snooze_alarm;
 }

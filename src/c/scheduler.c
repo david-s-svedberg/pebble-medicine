@@ -2,15 +2,27 @@
 
 #include <pebble.h>
 
+#include "persistance.h"
+#include "format.h"
+
 static WakeupId schedule(Alarm* alarm, time_t time)
 {
     struct tm* local_scheduled_time = localtime(&time);
     APP_LOG(
         APP_LOG_LEVEL_DEBUG,
-        "scheduling alarm for '%d:%d'",
+        "scheduling alarm for '%02d:%02d'",
         local_scheduled_time->tm_hour,
         local_scheduled_time->tm_min);
-    WakeupId id = wakeup_schedule(time, alarm->index, true);
+
+    WakeupId id = E_RANGE;
+    do {
+        id = wakeup_schedule(time, alarm->index, true);
+        if(id == E_RANGE)
+        {
+            time += SECONDS_PER_MINUTE / 2;
+        }
+    } while(id == E_RANGE);
+
     if(id >= 0)
     {
         alarm->wakeup_id = id;
@@ -18,9 +30,6 @@ static WakeupId schedule(Alarm* alarm, time_t time)
     {
         switch (id)
         {
-        case E_RANGE:
-            APP_LOG(APP_LOG_LEVEL_ERROR, "ERROR: Another event in period");
-            break;
         case E_INVALID_ARGUMENT:
             APP_LOG(APP_LOG_LEVEL_ERROR, "ERROR: Time is in the past");
             break;
@@ -39,7 +48,27 @@ static WakeupId schedule(Alarm* alarm, time_t time)
 
 void schedule_snooze_alarm(Alarm* alarm, time_t wakup_time)
 {
-    schedule(alarm, wakup_time);
+    Alarm* snooze_alarm = get_snooze_alarm();
+    snooze_alarm->time.hour = alarm->time.hour;
+    snooze_alarm->time.minute = alarm->time.minute;
+    schedule(snooze_alarm, wakup_time);
+}
+
+void ensure_all_alarms_scheduled()
+{
+    for(int i = 0; i < MAX_ALARMS; i++)
+    {
+        Alarm* alarm = get_alarm(i);
+        if(alarm->active)
+        {
+            bool scheduled = wakeup_query(alarm->wakeup_id, NULL);
+            if(!scheduled)
+            {
+                schedule_alarm(alarm);
+            }
+        }
+    }
+    schedule_alarm(get_alarm(SUMMER_TIME_ALARM_ID));
 }
 
 void schedule_alarm_for_tomorrow(Alarm* alarm)
@@ -86,4 +115,20 @@ TimeOfDay get_scheduled_time(Alarm* alarm)
         .minute = local_scheduled_time->tm_min
     };
     return scheduled_time_of_day;
+}
+
+char* get_next_alarm_time_string()
+{
+    static char next_alarm_buffer[6];
+    Alarm* next = get_next_alarm();
+    if(next == NULL)
+    {
+        snprintf(next_alarm_buffer, 6, "None");
+    } else
+    {
+        TimeOfDay scheduled_time_of_day = get_scheduled_time(next);
+        fill_time_string(next_alarm_buffer, scheduled_time_of_day.hour, scheduled_time_of_day.minute);
+    }
+
+    return next_alarm_buffer;
 }

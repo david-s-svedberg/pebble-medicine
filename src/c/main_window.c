@@ -15,6 +15,9 @@ static TextLayer* next_alarm_layer;
 
 static ActionBarLayer* main_window_action_bar_layer;
 
+static GColor8 m_background_color;
+static GColor8 m_foreground_color;
+
 static void main_window_click_config_provider(void* context)
 {
     window_single_click_subscribe(BUTTON_ID_DOWN, goto_config_window);
@@ -24,7 +27,7 @@ static void main_window_click_config_provider(void* context)
 static void setup_main_window_action_bar_layer(Layer *window_layer, GRect bounds)
 {
     main_window_action_bar_layer = action_bar_layer_create();
-    action_bar_layer_set_background_color(main_window_action_bar_layer, GColorWhite);
+    action_bar_layer_set_background_color(main_window_action_bar_layer, m_foreground_color);
     action_bar_layer_add_to_window(main_window_action_bar_layer, main_window);
     action_bar_layer_set_click_config_provider(main_window_action_bar_layer, main_window_click_config_provider);
 
@@ -42,10 +45,10 @@ static void setup_next_alarm_layer(Layer *window_layer, GRect bounds)
     next_alarm_label_layer = text_layer_create(GRect(0, 80, bounds.size.w - 10, 30));
     next_alarm_layer = text_layer_create(GRect(0, 104, bounds.size.w - 10, 30));
 
-    text_layer_set_background_color(next_alarm_label_layer, GColorBlack);
-    text_layer_set_background_color(next_alarm_layer, GColorBlack);
-    text_layer_set_text_color(next_alarm_label_layer, GColorWhite);
-    text_layer_set_text_color(next_alarm_layer, GColorWhite);
+    text_layer_set_background_color(next_alarm_label_layer, m_background_color);
+    text_layer_set_background_color(next_alarm_layer, m_background_color);
+    text_layer_set_text_color(next_alarm_label_layer, m_foreground_color);
+    text_layer_set_text_color(next_alarm_layer, m_foreground_color);
     text_layer_set_font(next_alarm_label_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
     text_layer_set_font(next_alarm_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
     text_layer_set_text_alignment(next_alarm_label_layer, GTextAlignmentLeft);
@@ -61,8 +64,8 @@ static void setup_title_layer(Layer *window_layer, GRect bounds)
 {
     title_layer = text_layer_create(GRect(0, STATUS_BAR_LAYER_HEIGHT, bounds.size.w - ACTION_BAR_WIDTH, 60));
 
-    text_layer_set_background_color(title_layer, GColorBlack);
-    text_layer_set_text_color(title_layer, GColorWhite);
+    text_layer_set_background_color(title_layer, m_background_color);
+    text_layer_set_text_color(title_layer, m_foreground_color);
     text_layer_set_font(title_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
     text_layer_set_text_alignment(title_layer, GTextAlignmentCenter);
 
@@ -75,7 +78,7 @@ static void setup_status_bar(Layer *window_layer, GRect bounds)
 {
     status_bar = status_bar_layer_create();
 
-    status_bar_layer_set_colors(status_bar, GColorBlack, GColorWhite);
+    status_bar_layer_set_colors(status_bar, m_background_color, m_foreground_color);
     status_bar_layer_set_separator_mode(status_bar, StatusBarLayerSeparatorModeDotted);
 
     layer_add_child(window_layer, status_bar_layer_get_layer(status_bar));
@@ -83,7 +86,7 @@ static void setup_status_bar(Layer *window_layer, GRect bounds)
 
 static void load_main_window(Window *window)
 {
-    window_set_background_color(window, GColorBlack);
+    window_set_background_color(window, m_background_color);
     Layer *window_layer = window_get_root_layer(window);
     GRect bounds = layer_get_bounds(window_layer);
 
@@ -105,8 +108,11 @@ static void unload_main_window(Window *window)
     action_bar_layer_destroy(main_window_action_bar_layer);
 }
 
-void setup_main_window()
+void setup_main_window(GColor8 background_color, GColor8 foreground_color)
 {
+    m_background_color = background_color;
+    m_foreground_color = foreground_color;
+
     main_window = window_create();
 
     window_set_window_handlers(main_window, (WindowHandlers) {

@@ -2,3 +2,7 @@ node_modules
 .lock-waf_linux2_build
 
 build/
+publish/
+!publish/icons/
+!publish/screenshots/
+!publish/publish_info.txt
