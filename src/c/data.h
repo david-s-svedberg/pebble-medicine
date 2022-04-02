@@ -26,4 +26,5 @@ typedef struct {
     Alarm summer_time_alarm;
     GColor8 background_color;
     GColor8 foreground_color;
+    uint8_t alarm_timeout_sec;
 } Data;

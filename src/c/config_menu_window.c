@@ -14,13 +14,16 @@ static SimpleMenuLayer* alarms_menu_layer;
 static SimpleMenuItem m_alarm_items[5];
 static SimpleMenuItem m_reset_items[1];
 static SimpleMenuItem m_theme_items[1];
+static SimpleMenuItem m_timeout_items[1];
 static SimpleMenuItem m_theme_item;
+static SimpleMenuItem m_timeout_item;
 
 static SimpleMenuSection m_alarms_section;
-static SimpleMenuSection m_reset_sections;
-static SimpleMenuSection m_theme_sections;
+static SimpleMenuSection m_reset_section;
+static SimpleMenuSection m_theme_section;
+static SimpleMenuSection m_timeout_section;
 
-static SimpleMenuSection m_menu[3];
+static SimpleMenuSection m_menu[4];
 
 static GColor8 m_background_color;
 static GColor8 m_foreground_color;
@@ -44,6 +47,24 @@ static void toggle_current_theme(int index, void* context)
     refresh_menu();
 }
 
+static uint8_t get_next_timeout()
+{
+    uint next = get_alarm_timeout() + 60;
+    if(next > FOUR_MINUTES_IN_SEC)
+    {
+        next = 60;
+    }
+
+    return next;
+}
+
+static void tick_timeout(int index, void* context)
+{
+    set_alarm_timeout(get_next_timeout());
+    update_timeout_menu_item(&m_timeout_item);
+    refresh_menu();
+}
+
 static void setup_alarms_menu_layer(Layer *window_layer, GRect bounds)
 {
     m_alarms_section.num_items = 5;
@@ -55,20 +76,30 @@ static void setup_alarms_menu_layer(Layer *window_layer, GRect bounds)
     m_theme_item.callback = toggle_current_theme;
     m_theme_items[0] = m_theme_item;
 
-    m_theme_sections.num_items = 1;
-    m_theme_sections.title = "Theme";
-    m_theme_sections.items = m_theme_items;
+    m_theme_section.num_items = 1;
+    m_theme_section.title = "Theme";
+    m_theme_section.items = m_theme_items;
 
     m_reset_items[0].title = "Reset";
     m_reset_items[0].callback = reset_alarms;
 
-    m_reset_sections.num_items = 1;
-    m_reset_sections.title = "Reset Alarms";
-    m_reset_sections.items = m_reset_items;
+    m_reset_section.num_items = 1;
+    m_reset_section.title = "Reset Alarms";
+    m_reset_section.items = m_reset_items;
+
+    m_timeout_item.title = "Timeout";
+    m_timeout_item.subtitle = get_current_timeout();
+    m_timeout_item.callback = tick_timeout;
+    m_timeout_items[0] = m_timeout_item;
+
+    m_timeout_section.num_items = 1;
+    m_timeout_section.title = "Alarm Timeout";
+    m_timeout_section.items = m_timeout_items;
 
     m_menu[0] = m_alarms_section;
-    m_menu[1] = m_theme_sections;
-    m_menu[2] = m_reset_sections;
+    m_menu[1] = m_theme_section;
+    m_menu[2] = m_reset_section;
+    m_menu[3] = m_timeout_section;
     alarms_menu_layer = simple_menu_layer_create(
         GRect(0, STATUS_BAR_LAYER_HEIGHT, bounds.size.w, bounds.size.h - STATUS_BAR_LAYER_HEIGHT),
         config_window,

@@ -10,9 +10,10 @@ static WakeupId schedule(Alarm* alarm, time_t time)
     struct tm* local_scheduled_time = localtime(&time);
     APP_LOG(
         APP_LOG_LEVEL_DEBUG,
-        "scheduling alarm for '%02d:%02d'",
+        "scheduling alarm for '%02d:%02d' on the %d",
         local_scheduled_time->tm_hour,
-        local_scheduled_time->tm_min);
+        local_scheduled_time->tm_min,
+        local_scheduled_time->tm_mday);
 
     WakeupId id = E_RANGE;
     do {
@@ -51,6 +52,7 @@ void schedule_snooze_alarm(Alarm* alarm, time_t wakup_time)
     Alarm* snooze_alarm = get_snooze_alarm();
     snooze_alarm->time.hour = alarm->time.hour;
     snooze_alarm->time.minute = alarm->time.minute;
+    snooze_alarm->active = true;
     schedule(snooze_alarm, wakup_time);
 }
 
@@ -80,11 +82,6 @@ void schedule_alarm_for_tomorrow(Alarm* alarm)
 void schedule_alarm(Alarm* alarm)
 {
     time_t t = clock_to_timestamp(TODAY, alarm->time.hour, alarm->time.minute);
-    time_t now = time(NULL);
-    if(t - now < 30)
-    {
-        t += SECONDS_PER_DAY;
-    }
     schedule(alarm, t);
 }
 

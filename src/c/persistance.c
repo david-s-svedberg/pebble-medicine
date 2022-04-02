@@ -4,7 +4,11 @@
 #include <stdbool.h>
 #include <gcolor_definitions.h>
 
+const uint8_t FOUR_MINUTES_IN_SEC = 240;
+const uint8_t ONE_MINUTES_IN_SEC = 60;
+
 static const uint32_t DATA_KEY = 654654;
+
 static Data m_data;
 static bool m_data_loaded = false;
 
@@ -32,6 +36,7 @@ static void seed_data()
     m_data.summer_time_alarm.time.minute = 30;
     m_data.background_color = GColorBlack;
     m_data.foreground_color = GColorWhite;
+    m_data.alarm_timeout_sec = ONE_MINUTES_IN_SEC;
     persist_write_data(DATA_KEY, &m_data, sizeof(Data));
 }
 
@@ -156,6 +161,11 @@ GColor8 get_foreground_color()
     return get_data()->foreground_color;
 }
 
+uint8_t get_alarm_timeout()
+{
+    return get_data()->alarm_timeout_sec;
+}
+
 bool is_dark_theme()
 {
     uint8_t background = get_background_color().argb;
@@ -177,4 +187,11 @@ void toggle_theme()
 Alarm* get_snooze_alarm()
 {
     return &get_data()->snooze_alarm;
+}
+
+void set_alarm_timeout(uint8_t sec)
+{
+    Data* data = get_data();
+    data->alarm_timeout_sec = sec;
+    save_data();
 }

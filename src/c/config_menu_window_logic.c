@@ -35,6 +35,11 @@ void update_theme_menu_item(SimpleMenuItem* theme_item)
     theme_item->subtitle = get_current_theme();
 }
 
+void update_timeout_menu_item(SimpleMenuItem* timeout_item)
+{
+    timeout_item->subtitle = get_current_timeout();
+}
+
 char* get_current_theme()
 {
     static char theme_buffer[6];
@@ -50,4 +55,14 @@ void reset_alarms(int index, void* context)
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Reset Alarms requested");
     unschedule_all();
     ensure_all_alarms_scheduled();
+}
+
+char* get_current_timeout()
+{
+    static char timeout_buffer[10];
+
+    uint8_t timeout_min = get_alarm_timeout() / 60;
+    snprintf(timeout_buffer, 10, "%d minutes", timeout_min);
+
+    return timeout_buffer;
 }

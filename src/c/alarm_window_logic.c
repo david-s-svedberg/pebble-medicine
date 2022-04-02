@@ -20,6 +20,7 @@ static uint16_t snooze_progression[] = {5, 10, 15, 30, 60, 90, 120};
 static uint16_t m_snooze_minutes = 5;
 static AppTimer* m_snooze_selection_done = NULL;
 static AppTimer* m_silenced_timedout = NULL;
+static AppTimer* m_alarm_timedout = NULL;
 
 static const uint32_t const segments[] = { 50 };
 static const VibePattern m_vibration_pattern =
@@ -66,7 +67,6 @@ static void silence_alarm_handler(ClickRecognizerRef recognizer, void* context)
     {
         m_silenced_timedout = app_timer_register(FIVE_MINUTES_IN_MS, silence_timed_out, NULL);
     }
-
 }
 
 static void take_medicine_handler(ClickRecognizerRef recognizer, void* context)
@@ -119,6 +119,12 @@ static void back_alarm_handler(ClickRecognizerRef recognizer, void* context)
     close_alarm();
 }
 
+static void set_timeout()
+{
+    uint8_t timeout_sec = get_alarm_timeout();
+    m_alarm_timedout = app_timer_register(timeout_sec * 1000, snooze_selection_done, NULL);
+}
+
 void alarm_window_click_config_provider(void* context)
 {
     window_single_click_subscribe(BUTTON_ID_UP, silence_alarm_handler);
@@ -136,10 +142,18 @@ char* get_wakeup_alarm_time_string()
 
 void setup_alarm_state(int32_t alarm_index)
 {
-    m_wakup_alarm = alarm_index == SNOOZED_ALARM_ID ? get_snooze_alarm() : get_alarm(alarm_index);
+    if(alarm_index == SNOOZED_ALARM_ID)
+    {
+        m_wakup_alarm = get_snooze_alarm();
+        m_wakup_alarm->active = false;
+    } else {
+        m_wakup_alarm = get_alarm(alarm_index);
+    }
+
     schedule_alarm(m_wakup_alarm);
     save_data();
     run_vibration(NULL);
+    set_timeout();
 }
 
 void set_alarm_layers(
