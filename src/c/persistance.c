@@ -111,18 +111,29 @@ static Alarm* get_next_schedueled(Alarm** alarms, size_t number_of_alarms)
     for(size_t i = 0; i < number_of_alarms; i++)
     {
         Alarm* current = *(alarms + i);
-        if(current != NULL && current->active)
+        if(current != NULL)
         {
-            bool scheduled = wakeup_query(current->wakeup_id, &wakup_time);
-            if(scheduled)
+            if(current->active)
             {
-                uint32_t minutesUntilAlarm = (wakup_time - now)/SECONDS_PER_MINUTE;
-                if(next == NULL || minutesUntilAlarm < currentlyClosest)
+                bool scheduled = wakeup_query(current->wakeup_id, &wakup_time);
+                if(scheduled)
                 {
-                    next = current;
-                    currentlyClosest = minutesUntilAlarm;
+                    uint32_t minutesUntilAlarm = (wakup_time - now)/SECONDS_PER_MINUTE;
+                    if(next == NULL || minutesUntilAlarm < currentlyClosest)
+                    {
+                        APP_LOG(APP_LOG_LEVEL_DEBUG, "Alarm:%d is currently closest with %d minutes until alarm", current->index, (int)minutesUntilAlarm);
+                        next = current;
+                        currentlyClosest = minutesUntilAlarm;
+                    } else {
+                        APP_LOG(APP_LOG_LEVEL_DEBUG, "Alarm:%d is not closer with %d minutes until alarm", current->index, (int)minutesUntilAlarm);
+                    }
+                } else {
+                    APP_LOG(APP_LOG_LEVEL_DEBUG, "Alarm:%d not scheduled", current->index);
                 }
+            } else {
+                APP_LOG(APP_LOG_LEVEL_DEBUG, "Alarm:%d not active", current->index);
             }
+
         }
     }
     return next;

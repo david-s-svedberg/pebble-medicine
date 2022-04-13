@@ -47,6 +47,10 @@ static void run_vibration(void* data)
 static void close_alarm()
 {
     vibes_long_pulse();
+    if(m_alarm_timedout != NULL)
+    {
+        app_timer_cancel(m_alarm_timedout);
+    }
     exit_reason_set(APP_EXIT_ACTION_PERFORMED_SUCCESSFULLY);
     window_stack_remove(m_alarm_window, true);
 }

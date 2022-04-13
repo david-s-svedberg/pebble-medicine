@@ -15,6 +15,8 @@ static WakeupId schedule(Alarm* alarm, time_t time)
         local_scheduled_time->tm_min,
         local_scheduled_time->tm_mday);
 
+    unschedule_alarm(alarm);
+
     WakeupId id = E_RANGE;
     do {
         id = wakeup_schedule(time, alarm->index, true);
@@ -73,16 +75,42 @@ void ensure_all_alarms_scheduled()
     schedule_alarm(get_alarm(SUMMER_TIME_ALARM_ID));
 }
 
+static struct tm get_alarm_time_base(Alarm* alarm)
+{
+    time_t now = time(NULL);
+    struct tm* base_alarm_time = localtime(&now);
+    base_alarm_time->tm_hour = alarm->time.hour;
+    base_alarm_time->tm_min = alarm->time.minute;
+    base_alarm_time->tm_sec = 0;
+
+    return *base_alarm_time;
+}
+
 void schedule_alarm_for_tomorrow(Alarm* alarm)
 {
-    time_t t = clock_to_timestamp(TODAY, alarm->time.hour, alarm->time.minute) + SECONDS_PER_DAY;
-    schedule(alarm, t);
+    struct tm next_alarm = get_alarm_time_base(alarm);
+    next_alarm.tm_mday += 1;
+    schedule(alarm, mktime(&next_alarm));
+}
+
+static bool is_less_than_x_seconds_from_now(int x, struct tm* time_to_check)
+{
+    time_t now = time(NULL);
+    struct tm* local_now = localtime(&now);
+
+    return (mktime(time_to_check) - mktime(local_now) < x);
 }
 
 void schedule_alarm(Alarm* alarm)
 {
-    time_t t = clock_to_timestamp(TODAY, alarm->time.hour, alarm->time.minute);
-    schedule(alarm, t);
+    struct tm next_alarm = get_alarm_time_base(alarm);
+
+    if(is_less_than_x_seconds_from_now(30, &next_alarm))
+    {
+        next_alarm.tm_mday += 1;
+    }
+
+    schedule(alarm, mktime(&next_alarm));
 }
 
 void reschedule_alarm(Alarm* alarm)
