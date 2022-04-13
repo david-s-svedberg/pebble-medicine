@@ -24,20 +24,56 @@ static Alarm create_alarm(uint8_t index)
     return alarm;
 }
 
+static void seed_version_1_data(Data* data)
+{
+    data->snooze_alarm = create_alarm(SNOOZED_ALARM_ID);
+    data->summer_time_alarm = create_alarm(SUMMER_TIME_ALARM_ID);
+    data->summer_time_alarm.time.hour = 3;
+    data->summer_time_alarm.time.minute = 30;
+    data->background_color = GColorBlack;
+    data->foreground_color = GColorWhite;
+    data->alarm_timeout_sec = ONE_MINUTES_IN_SEC;
+    data->post_versioning_indicator = POST_VERSIONING_KEY;
+}
+
 static void seed_data()
 {
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Seeding data");
     for(uint8_t i = 0; i < MAX_ALARMS; i++)
     {
         m_data.alarms[i] = create_alarm(i);
     }
-    m_data.snooze_alarm = create_alarm(SNOOZED_ALARM_ID);
-    m_data.summer_time_alarm = create_alarm(SUMMER_TIME_ALARM_ID);
-    m_data.summer_time_alarm.time.hour = 3;
-    m_data.summer_time_alarm.time.minute = 30;
-    m_data.background_color = GColorBlack;
-    m_data.foreground_color = GColorWhite;
-    m_data.alarm_timeout_sec = ONE_MINUTES_IN_SEC;
+    seed_version_1_data(&m_data);
+
+    m_data.data_version = CURRENT_DATA_VERSION;
     persist_write_data(DATA_KEY, &m_data, sizeof(Data));
+}
+
+static bool data_version_is_current(Data* data)
+{
+    bool is_current = true;
+    if(data->post_versioning_indicator != POST_VERSIONING_KEY)
+    {
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "Post versioning indicator has the wrong value");
+        data->data_version = 0;
+        is_current = false;
+    } else if(data->data_version < CURRENT_DATA_VERSION)
+    {
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "The data version:%d is lower than the current version:%d", data->data_version, CURRENT_DATA_VERSION);
+        is_current = false;
+    }
+    return is_current;
+}
+
+static void migrate_data(Data* data)
+{
+    if(data->data_version < 1)
+    {
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "Migrating to data version 1");
+
+        seed_version_1_data(data);
+        data->data_version = 1;
+    }
 }
 
 static Data* get_data()
@@ -50,6 +86,11 @@ static Data* get_data()
     {
         persist_read_data(DATA_KEY, &m_data, sizeof(Data));
         m_data_loaded = true;
+        if(!data_version_is_current(&m_data))
+        {
+            migrate_data(&m_data);
+            save_data();
+        }
     }
     return &m_data;
 }
